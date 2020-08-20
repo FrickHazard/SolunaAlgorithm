@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <assert.h> 
 #include <vector>
+#include <unordered_set>
 
 enum PieceId { Sun = 0, Moon = 1, ShootingStar = 2, Stars = 3 };
 #define COLOR_COUNT 4u
@@ -167,22 +168,26 @@ std::vector<GameState> getBoardHeightSpaceSubColorSpace(std::vector<uint32_t> bo
     return result;
 }
 
-std::vector<bool> getSymmetries(GameState & gameState) {
-    std::vector<bool> result = std::vector<bool>(COLOR_COUNT, false);
+std::vector<uint32_t> getSymmetries(GameState & gameState) {
+
+    std::vector<uint32_t> result = std::vector<uint32_t>(COLOR_COUNT);
+
+    for (uint32_t i = 0; i < COLOR_COUNT; ++i)
+        result[i] = i;
+
     for (uint32_t i = 0; i < COLOR_COUNT; ++i) {
-        if (result[i]) continue;
+        if (result[i] != i) continue;
         for (uint32_t j = i + 1; j < COLOR_COUNT; ++j) {
+            if (result[j] != j) continue;
             if (gameState.pieceLists[i].size() != gameState.pieceLists[j].size()) continue;
             if (gameState.pieceLists[i].size() == 0) {
-                // for convienance reasons we mark an empty group symmetric
-                result[j] = true;
                 continue;
             }
             for (uint32_t k = 0; k < gameState.pieceLists[i].size(); ++k) {
                 if (gameState.pieceLists[i][k].height != gameState.pieceLists[j][k].height || gameState.pieceLists[i][k].count != gameState.pieceLists[j][k].count) {
                     break;
                 }
-                if (k == gameState.pieceLists[i].size() - 1) result[j] = true;
+                if (k == gameState.pieceLists[i].size() - 1) result[j] = i;
             }
             
         }
@@ -193,10 +198,10 @@ std::vector<bool> getSymmetries(GameState & gameState) {
 std::vector<MoveResult> getPossibleMoves(GameState & gameState) {
 
     std::vector<MoveResult> result = std::vector<MoveResult>();
-    std::vector<bool> symmetries = getSymmetries(gameState);
+    std::vector<uint32_t> symmetries = getSymmetries(gameState);
 
     for (uint32_t i = 0; i < COLOR_COUNT; ++i) {
-        if (symmetries[i]) continue;
+        if (symmetries[i] < i) continue;
         // get intercolor moves
         for (uint32_t j = 0; j < gameState.pieceLists[i].size(); ++j) {
             if (gameState.pieceLists[i][j].count > 1) result.push_back({ i, j, i, j });
@@ -230,13 +235,17 @@ std::vector<MoveResult> getPossibleMoves(GameState & gameState) {
 
         if (indicesExhausted) exit = true;
         else {
-            for (uint32_t i = 0; i < sameHeightsColorIndex.size(); ++i)
-            {
-                if (symmetries[sameHeightsColorIndex[i]]) continue;
+            for (uint32_t i = 0; i < sameHeightsColorIndex.size(); ++i) {
+                if (symmetries[sameHeightsColorIndex[i]] != i) continue;
+                std::unordered_set<uint32_t> dupSet = std::unordered_set<uint32_t>();
                 for (uint32_t j = i + 1; j < sameHeightsColorIndex.size(); ++j)
                 {
+                    if (dupSet.count(symmetries[sameHeightsColorIndex[i]]) == 1) continue;
+                    dupSet.insert(symmetries[sameHeightsColorIndex[i]]);
                     result.push_back({ sameHeightsColorIndex[i], sameHeightsSubIndex[i], sameHeightsColorIndex[j], sameHeightsSubIndex[j] });
-                    result.push_back({ sameHeightsColorIndex[j], sameHeightsSubIndex[j], sameHeightsColorIndex[i], sameHeightsSubIndex[i] });
+                    if (symmetries[sameHeightsColorIndex[i]] != i) {
+                        result.push_back({ sameHeightsColorIndex[j], sameHeightsSubIndex[j], sameHeightsColorIndex[i], sameHeightsSubIndex[i] });
+                    }
                 }
             }            
         }
