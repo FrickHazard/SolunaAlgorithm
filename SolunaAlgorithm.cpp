@@ -223,7 +223,7 @@ PieceStack * getSymmetricGames(uint32_t* wLenGames)
 {
     // All whole number solutions to 12 = A + B + C + D
     // parition of 12, with 4 number constraint
-    uint16_t symmetric[23][4] = {
+    uint16_t symmetric[34][4] = {
         // first 4 p1 wins
         { 12, 0, 0, 0 },
         { 11, 1, 0, 0 },
@@ -252,7 +252,21 @@ PieceStack * getSymmetricGames(uint32_t* wLenGames)
         { 6, 4, 1, 1 },
         { 6, 3, 3, 0 },
         { 6, 3, 2, 1 },
-        { 6, 2, 2, 2 }
+        { 6, 2, 2, 2 },
+
+        { 5, 5, 2, 0 },
+        { 5, 5, 1, 1 },
+        { 5, 4, 3, 0 },
+        { 5, 4, 2, 1 },
+        { 5, 3, 3, 1 },
+        { 5, 3, 2, 2 },
+        
+        { 4, 4, 4, 0 },
+        { 4, 4, 3, 1 },
+        { 4, 4, 2, 2 },
+        { 4, 3, 3, 2 },
+        
+        { 3, 3, 3, 3 }, 
     };
     
     PieceStack* games = (PieceStack*)malloc(sizeof(PieceStack) * 23 * PIECE_COUNT);
@@ -432,10 +446,14 @@ bool SolunaAlgorithm(PieceStack* arr, uint32_t len, MoveResult moveToApply, uint
             if (parity == 0) {
                 returnMove = move;
             }
-            return guaranteedWin;            
+            free(newGameState);
+            free(moves);
+            return true;            
         }
 
         else if (opponentsTurn && !guaranteedWin) {
+            free(newGameState);
+            free(moves);
             return false;
         }
        
@@ -498,7 +516,20 @@ int main()
 
     //    std::cout << "Player 1 Wins: " << player1Wins << std::endl;
     //    std::cout << "Player 2 Wins: " << player2Wins << std::endl;
+
     //}
+
+    {
+        uint32_t gameStateLength;
+        PieceStack* symmetricGames = getSymmetricGames(&gameStateLength);
+        for (uint32_t i = 0; i < gameStateLength; ++i) {
+            const bool guaranteedWin = SolunaAlgorithm(symmetricGames + (i * PIECE_COUNT), PIECE_COUNT, { 0 }, 0);
+           
+            std::cout << "Determined: " << (guaranteedWin ? "true, " : "false, ") << "Move " << enumNames[returnMove.top.id] << " " << returnMove.top.height << " Onto " << enumNames[returnMove.bottom.id] << " " << returnMove.bottom.height << std::endl;
+        }
+
+        free(symmetricGames);
+    }
 
     {
         PieceStack board[12] = { 0 };
@@ -511,9 +542,9 @@ int main()
         board[6] = { 1, Sun };
         board[7] = { 1, Sun };
         board[8] = { 1, Sun };
-        board[9] = { 1, Moon };
-        board[10] = { 1, Moon };
-        board[11] = { 1, Moon };
+        board[9] = { 1, Sun };
+        board[10] = { 1, Sun };
+        board[11] = { 1, Sun };
         bool guaranteedWin = SolunaAlgorithm(board, 12, { 0 }, 0);
         // std::cout << "Leaf nodes " << guarenteedWin.leafCount << " Leaf Victory " << result.leafVictory << std::endl;
         std::cout << "Determined: " << (guaranteedWin ? "true, " : "false, ") << "Move " << enumNames[returnMove.top.id] << " " << returnMove.top.height << " Onto " << enumNames[returnMove.bottom.id] << " " << returnMove.bottom.height << std::endl;
