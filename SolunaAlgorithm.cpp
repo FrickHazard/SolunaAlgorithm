@@ -519,33 +519,42 @@ int main()
 
     //}
 
-    {
-        uint32_t gameStateLength;
-        PieceStack* symmetricGames = getSymmetricGames(&gameStateLength);
-        for (uint32_t i = 0; i < gameStateLength; ++i) {
-            const bool guaranteedWin = SolunaAlgorithm(symmetricGames + (i * PIECE_COUNT), PIECE_COUNT, { 0 }, 0);
-           
-            std::cout << "Determined: " << (guaranteedWin ? "true, " : "false, ") << "Move " << enumNames[returnMove.top.id] << " " << returnMove.top.height << " Onto " << enumNames[returnMove.bottom.id] << " " << returnMove.bottom.height << std::endl;
-        }
+    //{
+    //    uint32_t gameStateLength;
+    //    PieceStack* symmetricGames = getSymmetricGames(&gameStateLength);
+    //    for (uint32_t i = 0; i < gameStateLength; ++i) {
+    //        const bool guaranteedWin = SolunaAlgorithm(symmetricGames + (i * PIECE_COUNT), PIECE_COUNT, { 0 }, 0);
+    //       
+    //        std::cout << "Determined: " << (guaranteedWin ? "true, " : "false, ") << "Move " << enumNames[returnMove.top.id] << " " << returnMove.top.height << " Onto " << enumNames[returnMove.bottom.id] << " " << returnMove.bottom.height << std::endl;
+    //    }
 
-        free(symmetricGames);
-    }
+    //    free(symmetricGames);
+    //}
 
     {
-        PieceStack board[12] = { 0 };
-        board[0] = { 1, Sun };
-        board[1] = { 1, Sun };
-        board[2] = { 1, Sun };
-        board[3] = { 1, Sun };
-        board[4] = { 1, Sun };
-        board[5] = { 1, Sun };
-        board[6] = { 1, Sun };
-        board[7] = { 1, Sun };
-        board[8] = { 1, Sun };
-        board[9] = { 1, Sun };
-        board[10] = { 1, Sun };
-        board[11] = { 1, Sun };
-        bool guaranteedWin = SolunaAlgorithm(board, 12, { 0 }, 0);
+        std::vector< PieceStack> boardVec = std::vector< PieceStack>();
+        // boardVec.push_back({ 1, ShootingStar });
+        // boardVec.push_back({ 1, ShootingStar });
+        // boardVec.push_back({ 2, ShootingStar });
+        boardVec.push_back({ 3, ShootingStar });
+        boardVec.push_back({ 5, ShootingStar });
+
+
+        // boardVec.push_back({ 1, Moon });
+        // boardVec.push_back({ 1, Moon });
+        //boardVec.push_back({ 1, Moon });
+
+        boardVec.push_back({ 1, Stars });
+        boardVec.push_back({ 2, Stars });
+
+        boardVec.push_back({ 1, Sun });
+        // boardVec.push_back({ 1, Sun });
+        // boardVec.push_back({ 1, Moon });
+        // boardVec.push_back({ 1, Moon });
+
+
+       // board[11] = { 1, Stars };
+        bool guaranteedWin = SolunaAlgorithm(boardVec.data(), boardVec.size(), { 0 }, 0);
         // std::cout << "Leaf nodes " << guarenteedWin.leafCount << " Leaf Victory " << result.leafVictory << std::endl;
         std::cout << "Determined: " << (guaranteedWin ? "true, " : "false, ") << "Move " << enumNames[returnMove.top.id] << " " << returnMove.top.height << " Onto " << enumNames[returnMove.bottom.id] << " " << returnMove.bottom.height << std::endl;
     }
