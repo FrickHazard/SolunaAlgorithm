@@ -403,7 +403,7 @@ PieceStack * applyMoveToGameState(PieceStack* arr, uint32_t len, MoveResult move
     return newGameState;
 }
 
-BranchResult SolunaAlgorithm(PieceStack* arr, uint32_t len, MoveResult moveToApply, uint16_t parity)
+bool SolunaAlgorithm(PieceStack* arr, uint32_t len, MoveResult moveToApply, uint16_t parity)
 {
     const bool opponentsTurn = (parity % 2);
    
@@ -417,7 +417,7 @@ BranchResult SolunaAlgorithm(PieceStack* arr, uint32_t len, MoveResult moveToApp
     if (moveLength == 0) {        
         free(newGameState);
         free(moves);
-        return { 1, (opponentsTurn ? 1u : 0u), opponentsTurn };
+        return opponentsTurn;
     }
 
     BranchResult result = {0, 0, false};
@@ -425,28 +425,25 @@ BranchResult SolunaAlgorithm(PieceStack* arr, uint32_t len, MoveResult moveToApp
     for (uint32_t i = 0; i < moveLength; i++)
     {
         const MoveResult move = moves[i];
-        const BranchResult branchResult = SolunaAlgorithm(newGameState, gameStateLength, move, parity + 1);
+        const bool guaranteedWin = SolunaAlgorithm(newGameState, gameStateLength, move, parity + 1);
 
         // on your turn if there exists a branch where you win return true
-        if (!opponentsTurn && branchResult.guaranteedWin) {
+        if (!opponentsTurn && guaranteedWin) {
             if (parity == 0) {
                 returnMove = move;
             }
-            result.guaranteedWin = true;            
+            return guaranteedWin;            
         }
 
-        result.leafCount += branchResult.leafCount;
-        result.leafVictory += branchResult.leafVictory;
-    }
-
-
-    // choose best path here
-    if (!opponentsTurn && !result.guaranteedWin) {
+        else if (opponentsTurn && !guaranteedWin) {
+            return false;
+        }
+       
     }
 
     free(newGameState);
     free(moves);
-    return result;
+    return opponentsTurn;
 }
 
 PieceStack* generateRandomStartingGame(uint32_t * wLen)
@@ -479,9 +476,9 @@ bool getNextInitialConditions(PieceStack * gameState, uint32_t gameStateLength)
 
 int main()
 {
-    getCombinations(4, 3);
+   /* getCombinations(4, 3);
     getAllSymmertricBoardSpaces();
-    return 0;
+    return 0;*/
     //{
     //    uint32_t player1Wins = 0;
     //    uint32_t player2Wins = 0;
@@ -503,7 +500,7 @@ int main()
     //    std::cout << "Player 2 Wins: " << player2Wins << std::endl;
     //}
 
-   /* {
+    {
         PieceStack board[12] = { 0 };
         board[0] = { 1, Sun };
         board[1] = { 1, Sun };
@@ -517,11 +514,11 @@ int main()
         board[9] = { 1, Moon };
         board[10] = { 1, Moon };
         board[11] = { 1, Moon };
-        BranchResult result = SolunaAlgorithm(board, 12, { 0 }, 0);
-        std::cout << "Leaf nodes " <<result.leafCount << " Leaf Victory " << result.leafVictory << std::endl;
-        std::cout << "Determined: " << (result.guaranteedWin ? "true, " : "false, ") << "Move " << enumNames[returnMove.top.id] << " " << returnMove.top.height << " Onto " << enumNames[returnMove.bottom.id] << " " << returnMove.bottom.height << std::endl;
-    }*/
-    {
+        bool guaranteedWin = SolunaAlgorithm(board, 12, { 0 }, 0);
+        // std::cout << "Leaf nodes " << guarenteedWin.leafCount << " Leaf Victory " << result.leafVictory << std::endl;
+        std::cout << "Determined: " << (guaranteedWin ? "true, " : "false, ") << "Move " << enumNames[returnMove.top.id] << " " << returnMove.top.height << " Onto " << enumNames[returnMove.bottom.id] << " " << returnMove.bottom.height << std::endl;
+    }
+    /*{
         uint32_t gameStateLength;
         PieceStack* symmetricGames = getSymmetricGames(&gameStateLength);
         for (uint32_t i = 0; i < gameStateLength; ++i) {
@@ -532,5 +529,5 @@ int main()
         }
 
         free(symmetricGames);
-    }
+    }*/
 }
