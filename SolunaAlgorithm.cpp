@@ -41,7 +41,6 @@ struct BranchResult {
     uint32_t leafCount;
     uint32_t leafVictory;
     bool guaranteedWin;
-    // move set
 } typedef BranchResult;
 
 
@@ -71,6 +70,17 @@ struct ColorPieceVector {
         return 0;
     }
 };
+template <class PieceStack>
+bool operator==(const std::vector<PieceStack>& pieceList1, const std::vector<PieceStack>& pieceList2) {
+    if (pieceList1.size() != pieceList2.size()) return false;
+    for (uint32_t i = 0; i < pieceList1.size(); ++i) {
+        if (pieceList1[i].height != pieceList2[i].height || pieceList1[i].count != pieceList2[i].count) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 bool operator==(const GameState& gameState1, const GameState& gameState2) {
     if (gameState1.colorCount != gameState2.colorCount) return false;
@@ -137,7 +147,7 @@ std::vector<std::vector<uint32_t>> nextPartition(std::vector<std::vector<uint32_
     return result;
 }
 
-std::unordered_map<std::vector<PieceStack>, uint32_t, ColorPieceVector> generatePartitionId()
+std::unordered_map<std::vector<PieceStack>, uint32_t, ColorPieceVector> generatePartitionIdMap()
 {
     std::unordered_map<std::vector<PieceStack>, uint32_t, ColorPieceVector> colorListToPartition = std::unordered_map < std::vector<PieceStack>, uint32_t, ColorPieceVector>();
 
@@ -150,9 +160,12 @@ std::unordered_map<std::vector<PieceStack>, uint32_t, ColorPieceVector> generate
             uint32_t nmbIdx = 0;
             for (uint32_t k = 0; k < heightCountPartition[j].size(); ++k) {                
                 if (heightCountPartition[j][k] != heightCountPartition[j][nmbIdx]) {
-                    pieces.push_back({ heightCountPartition[j][k], (k - nmbIdx) });
+                    pieces.push_back({ heightCountPartition[j][nmbIdx], (k - nmbIdx) });
                     nmbIdx = k;
-                }                
+                }
+                if (k == heightCountPartition[j].size() - 1) {
+                    pieces.push_back({ heightCountPartition[j][nmbIdx], (k - nmbIdx) + 1 });
+                }
             }
             colorListToPartition.insert({ pieces, partitionId });
             ++partitionId;
@@ -323,114 +336,94 @@ std::vector<MoveResult> getPossibleMoves(const GameState & gameState) {
     return result;
 }
 
+GameState applyMoveToGameState(const GameState& gameState, MoveResult move)
+{
+    GameState newGameState = gameState;
+    uint32_t newHeight = newGameState.pieceLists[move.bottomColorIndex][move.bottomSubIndex].height + newGameState.pieceLists[move.topColorIndex][move.topSubIndex].height;
+    --newGameState.pieceLists[move.bottomColorIndex][move.bottomSubIndex].count;
+    if (newGameState.pieceLists[move.bottomColorIndex][move.bottomSubIndex].count == 0) {
+        for (uint32_t i = move.bottomSubIndex; i < newGameState.pieceLists[move.bottomColorIndex].size() - 1; ++i) {
+            newGameState.pieceLists[move.bottomColorIndex][i] = newGameState.pieceLists[move.bottomColorIndex][i + 1];
+        }
+        newGameState.pieceLists[move.bottomColorIndex].resize(newGameState.pieceLists[move.bottomColorIndex].size() - 1);
+    }
+
+    --newGameState.pieceLists[move.topColorIndex][move.topSubIndex].count;
+    if (newGameState.pieceLists[move.topColorIndex][move.topSubIndex].count == 0) {
+        for (uint32_t i = move.topSubIndex; i < newGameState.pieceLists[move.topColorIndex].size() - 1; ++i) {
+            newGameState.pieceLists[move.topColorIndex][i] = newGameState.pieceLists[move.topColorIndex][i + 1];
+        }
+        newGameState.pieceLists[move.topColorIndex].resize(newGameState.pieceLists[move.topColorIndex].size() - 1);
+    }
+
+    for (uint32_t i = move.topSubIndex; i < newGameState.pieceLists[move.topColorIndex].size(); ++i) {
+        if (newGameState.pieceLists[move.topColorIndex][i].height == newHeight) {
+            ++newGameState.pieceLists[move.topColorIndex][i].count;
+            break;
+        }
+        else if (newGameState.pieceLists[move.topColorIndex][i].height > newHeight || i == newGameState.pieceLists[move.topColorIndex].size() - 1) {
+            newGameState.pieceLists[move.topColorIndex].insert(newGameState.pieceLists[move.topColorIndex].begin() + i, { {newHeight, 1 } });
+            break;
+        }
+    }
+
+    return newGameState;
+}
+
+BranchResult SolunaAlgorithm
+(
+    const GameState gameState,
+    std::unordered_map<GameState, std::vector<MoveResult>, GameStateHash>& moveMap,
+    std::unordered_map<GameState, BranchResult, GameStateHash>& branchResultMap,
+    uint32_t parity = 0
+    )
+{
+    auto cached = branchResultMap.find(gameState);
+    if (cached != branchResultMap.end()) {
+        return cached->second;
+    }
+
+    const bool opponentsTurn = (parity % 2);
+
+    assert(moveMap.find(gameState) != moveMap.end());
+    std::vector<MoveResult> moves = moveMap[gameState];
+
+    // leaf node
+    if (moves.size() == 0) {
+        BranchResult result = { 1, (opponentsTurn ? 1u : 0u), opponentsTurn };
+        branchResultMap.insert({ gameState, result });
+        return result;
+    }
+
+    BranchResult result = { 0, 0, false };
+
+    for (const auto move : moves)
+    {
+        const GameState newGameState = applyMoveToGameState(gameState, move);
+
+        const BranchResult branchResult = SolunaAlgorithm(newGameState, moveMap, branchResultMap, parity + 1);
+
+        // on your turn if there exists a branch where you win return true
+        if (!opponentsTurn && branchResult.guaranteedWin) {
+            if (parity == 0) {
+                returnMove = move;
+            }
+            result.guaranteedWin = true;
+        }
+
+        result.leafCount += branchResult.leafCount;
+        result.leafVictory += branchResult.leafVictory;
+    }
 
 
+    // choose best path here
+    if (!opponentsTurn && !result.guaranteedWin) {
+        //
+    }
 
-// MoveResult * getPossibleMoves(PieceStack* arr, uint32_t len, uint32_t * wLen) {
-
-    // hardcode for now
-    //// also could reduce branches, by piece symmetry, since there is nothing special about any one PieceId
-    //const uint32_t movesUpperBound = 32;
-    //bool same[4] = { false };
-    //{
-    //    int idCount[4] = { 0 };
-    //    for (uint32_t i = 0; i < len; ++i) idCount[arr[i].id]++;
-    //    uint32_t indices[4] = { 0 };
-    //    PieceStack* piece[4] = { 0 };
-    //    piece[0] = (PieceStack*)malloc(idCount[0] * sizeof(PieceStack));
-    //    piece[1] = (PieceStack*)malloc(idCount[1] * sizeof(PieceStack));
-    //    piece[2] = (PieceStack*)malloc(idCount[2] * sizeof(PieceStack));
-    //    piece[3] = (PieceStack*)malloc(idCount[3] * sizeof(PieceStack));
-    //    for (uint32_t i = 0; i < len; ++i) {
-    //        piece[arr[i].id][indices[arr[i].id]] = arr[i];
-    //        ++indices[arr[i].id];
-    //    }
-    //    // bubble sort
-    //    for (uint32_t i = 0; i < 4; ++i)
-    //    for (int j = 0; j < idCount[i] - 1; ++j)
-    //    for (int k = 0; k < (idCount[i] - j - 1); ++k) {
-    //        if ((piece[i])[k].height > piece[i][k + 1].height)
-    //             std::swap(piece[i][k], piece[i][k + 1]);
-    //    }
-
-    //    for (uint32_t i = 0; i < 3; ++i) {
-    //        for (uint32_t j = i + 1; j < 4; ++j) {
-    //            if (idCount[i] == idCount[j] && same[j] == false) {
-    //                for (uint32_t k = 0; k < idCount[i]; ++k) {
-    //                    if (piece[i][k].height != piece[j][k].height) {                           
-    //                        break;
-    //                    }
-    //                    else if (k == idCount[i] - 1)  same[j] = true;
-    //                }
-    //            }
-    //        }
-    //    }
-
-    //    free(piece[0]);
-    //    free(piece[1]);
-    //    free(piece[2]);
-    //    free(piece[3]);     
-    //}
-
-    //uint32_t count = 0;
-    //MoveResult * moves = (MoveResult *)malloc(sizeof(MoveResult) * movesUpperBound);
-    //for (uint32_t i = 0; i < len; ++i) {
-    //    if (same[arr[i].id]) continue;
-    //    for (uint32_t j = 0; j < len; ++j) {
-    //        if (i == j) continue;
-    //        const bool heightsMatch = arr[i].height == arr[j].height;
-    //        const bool idsMatch = arr[i].id == arr[j].id;
-    //        bool moveAlreadyLoggedForward = false;
-    //        bool moveAlreadyLoggedBack = false;
-    //        for (uint32_t k = 0; k < count; ++k) {
-    //            if (
-    //                moves[k].top.height == arr[i].height
-    //                && moves[k].top.id == arr[i].id
-    //                && moves[k].bottom.height == arr[j].height
-    //                && moves[k].bottom.id == arr[j].id) {
-    //                moveAlreadyLoggedForward = true;
-    //            }
-    //            if (
-    //                moves[k].bottom.height == arr[i].height
-    //                && moves[k].bottom.id == arr[i].id
-    //                && moves[k].top.height == arr[j].height
-    //                && moves[k].top.id == arr[j].id) {
-    //                moveAlreadyLoggedBack = true;
-    //            }
-    //        }
-
-    //        if (heightsMatch && idsMatch && !moveAlreadyLoggedForward) {
-    //            moves[count] = { arr[i], arr[j], i, j };
-    //            ++count;
-    //            if (same[arr[j].id] && !moveAlreadyLoggedBack) {
-    //                moves[count] = { arr[j], arr[i], j, i };
-    //                ++count;
-    //            }
-    //        }
-    //        else if (idsMatch && !moveAlreadyLoggedForward) {
-    //            moves[count] = { arr[i], arr[j], i, j };
-    //            ++count;
-    //            if (same[arr[j].id] && !moveAlreadyLoggedBack) {
-    //                moves[count] = { arr[j], arr[i], j, i };
-    //                ++count;
-    //            }
-    //        }
-    //        else if (heightsMatch) {
-    //            if (!moveAlreadyLoggedForward) {
-    //                moves[count] = { arr[i], arr[j], i, j };
-    //                ++count;
-    //            }
-    //            if (!moveAlreadyLoggedBack) {
-    //                moves[count] = { arr[j], arr[i], j, i };
-    //                ++count;
-    //            }
-    //        }
-    //    }
-    //}
-
-    //(*wLen) = count;
-    //return moves;
-// }
+    branchResultMap.insert({ gameState, result });
+    return result;
+}
 
 void getAllSymmertricBoardSpaces()
 {
@@ -449,158 +442,24 @@ void getAllSymmertricBoardSpaces()
             }
     }
 
-    std::unordered_map<GameState, std::vector<MoveResult>, GameStateHash> map = std::unordered_map<GameState, std::vector<MoveResult>, GameStateHash>();   
-    for (auto const& gameState : allGameStates) {
-        
+    std::unordered_map<GameState, std::vector<MoveResult>, GameStateHash> moveMap = std::unordered_map<GameState, std::vector<MoveResult>, GameStateHash>();
+
+    // std::unordered_map<std::vector<PieceStack>, uint32_t, ColorPieceVector> A = generatePartitionIdMap();
+    for (auto const& gameState : allGameStates) {      
         std::vector<MoveResult> moves = getPossibleMoves(gameState);
 
-        map.insert({ gameState, moves });
+        moveMap.insert({ gameState, moves });
+    }
+    
+    std::unordered_map<GameState, BranchResult, GameStateHash> branchMap = std::unordered_map<GameState, BranchResult, GameStateHash>();
+
+    for (auto const& gameState : allGameStates) {
+        branchMap.insert({ gameState, SolunaAlgorithm(gameState, moveMap, branchMap) });
     }
 }
-
-
-//PieceStack * applyMoveToGameState(PieceStack* arr, uint32_t len, MoveResult moveToApply, uint32_t * wLen)
-//{
-//    uint32_t gameStateLength;
-//    PieceStack* newGameState;
-//    if (moveToApply.topIndex == 0 && moveToApply.bottomIndex == 0) {
-//        gameStateLength = len;
-//        newGameState = (PieceStack*)malloc(sizeof(PieceStack) * gameStateLength);
-//        for (uint32_t i = 0; i < gameStateLength; i++) newGameState[i] = arr[i];
-//    }
-//    else {
-//        gameStateLength = len - 1;
-//        // apply move result;
-//        newGameState = (PieceStack*)malloc(sizeof(PieceStack) * gameStateLength);
-//
-//        int j = 0;
-//        for (uint32_t i = 0; i < len; i++) {
-//            if (moveToApply.bottomIndex == i || moveToApply.topIndex == i) continue;
-//            newGameState[j] = arr[i];
-//            ++j;
-//        }
-//        newGameState[j] = { (uint16_t)(moveToApply.top.height + moveToApply.bottom.height), moveToApply.top.id };
-//    }
-//    (*wLen) = gameStateLength;
-//    return newGameState;
-//}
-
-//BranchResult SolunaAlgorithm(PieceStack* arr, uint32_t len, MoveResult moveToApply, uint16_t parity)
-//{
-//    const bool opponentsTurn = (parity % 2);
-//   
-//    uint32_t gameStateLength;
-//    PieceStack * newGameState = applyMoveToGameState(arr, len, moveToApply, &gameStateLength);
-//
-//    uint32_t moveLength = 0;
-//    MoveResult* moves = getPossibleMoves(newGameState, gameStateLength, &moveLength);
-//
-//    // leaf node
-//    if (moveLength == 0) {        
-//        free(newGameState);
-//        free(moves);
-//        return { 1, (opponentsTurn ? 1u : 0u), opponentsTurn };
-//    }
-//
-//    BranchResult result = {0, 0, false};
-//
-//    for (uint32_t i = 0; i < moveLength; i++)
-//    {
-//        const MoveResult move = moves[i];
-//        const BranchResult branchResult = SolunaAlgorithm(newGameState, gameStateLength, move, parity + 1);
-//
-//        // on your turn if there exists a branch where you win return true
-//        if (!opponentsTurn && branchResult.guaranteedWin) {
-//            if (parity == 0) {
-//                returnMove = move;
-//            }
-//            result.guaranteedWin = true;            
-//        }
-//
-//        result.leafCount += branchResult.leafCount;
-//        result.leafVictory += branchResult.leafVictory;
-//    }
-//
-//
-//    // choose best path here
-//    if (!opponentsTurn && !result.guaranteedWin) {
-//    }
-//
-//    free(newGameState);
-//    free(moves);
-//    return result;
-//}
-
-//PieceStack* generateRandomStartingGame(uint32_t * wLen)
-//{
-//    PieceStack* gameState = (PieceStack*)malloc(sizeof(PieceStack) * PIECE_COUNT);
-//    for (uint32_t i = 0; i < PIECE_COUNT; i++)
-//    {
-//        // since modulo by 4, fits neatly into rand range
-//        PieceId idNumb = (PieceId)(rand() % 4);
-//        gameState[i] = { 1, idNumb };
-//    }
-//
-//    (*wLen) = PIECE_COUNT;
-//
-//    return gameState;
-//}
-//// returns true when there is more gameStates
-
 
 int main()
 {
     getAllSymmertricBoardSpaces();
     return 0;
-    //{
-    //    uint32_t player1Wins = 0;
-    //    uint32_t player2Wins = 0;
-    //    uint32_t gameStateLength;
-    //    PieceStack* symmetricGames = getSymmetricGames(&gameStateLength);
-
-    //    for (uint32_t i = 0; i < gameStateLength; ++i) {
-    //        const bool p1Win = SolunaGuaranteedWin(symmetricGames + (i * PIECE_COUNT), PIECE_COUNT, { 0 }, 0);
-
-
-
-    //        if (p1Win) player1Wins += 1;
-    //        else player2Wins += 1;
-    //    }
-
-    //    free(symmetricGames);
-
-    //    std::cout << "Player 1 Wins: " << player1Wins << std::endl;
-    //    std::cout << "Player 2 Wins: " << player2Wins << std::endl;
-    //}
-
-   /* {
-        PieceStack board[12] = { 0 };
-        board[0] = { 1, Sun };
-        board[1] = { 1, Sun };
-        board[2] = { 1, Sun };
-        board[3] = { 1, Sun };
-        board[4] = { 1, Sun };
-        board[5] = { 1, Sun };
-        board[6] = { 1, Sun };
-        board[7] = { 1, Sun };
-        board[8] = { 1, Sun };
-        board[9] = { 1, Moon };
-        board[10] = { 1, Moon };
-        board[11] = { 1, Moon };
-        BranchResult result = SolunaAlgorithm(board, 12, { 0 }, 0);
-        std::cout << "Leaf nodes " <<result.leafCount << " Leaf Victory " << result.leafVictory << std::endl;
-        std::cout << "Determined: " << (result.guaranteedWin ? "true, " : "false, ") << "Move " << enumNames[returnMove.top.id] << " " << returnMove.top.height << " Onto " << enumNames[returnMove.bottom.id] << " " << returnMove.bottom.height << std::endl;
-    }*/
-    /*{
-        uint32_t gameStateLength;
-        PieceStack* symmetricGames = getSymmetricGames(&gameStateLength);
-        for (uint32_t i = 0; i < gameStateLength; ++i) {
-            const BranchResult result = SolunaAlgorithm(symmetricGames + (i * PIECE_COUNT), PIECE_COUNT, { 0 }, 0);
-
-            std::cout << (i+1) <<": Leaf nodes " << result.leafCount << " Leaf Victory " << result.leafVictory << std::endl;
-            std::cout << "Determined: " << (result.guaranteedWin ? "true, " : "false, ") << "Move " << enumNames[returnMove.top.id] << " " << returnMove.top.height << " Onto " << enumNames[returnMove.bottom.id] << " " << returnMove.bottom.height << std::endl;
-        }
-
-        free(symmetricGames);
-    }*/
 }
