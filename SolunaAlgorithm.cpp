@@ -10,10 +10,11 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <chrono>
+
+
 // copy of boosts hash_combine
 template <class T>
-inline void hash_combine(std::size_t& s, const T& v)
-{
+inline void hash_combine(std::size_t& s, const T& v) {
     std::hash<T> h;
     s ^= h(v) + 0x9e3779b9 + (s << 6) + (s >> 2);
 }
@@ -42,13 +43,12 @@ struct BranchResult {
 } typedef BranchResult;
 
 
-struct GameStateHash
-{
-    size_t operator()(const std::multiset<uint32_t>& gameState) const {
+struct GameStateHash {
+    size_t operator()(const std::vector<uint32_t>& gameState) const {
         size_t hsh = std::hash<uint32_t>{}(gameState.size());
-        for (const auto id : gameState) {
+        for (uint32_t i = 0; i < gameState.size(); ++i) {
             // order matters!
-            hash_combine(hsh, id);
+            hash_combine(hsh, gameState[i]);
         }
         return hsh;
     }
@@ -66,32 +66,10 @@ struct PartitionHash {
     }
 };
 
-bool operator==(const std::multiset<uint32_t>& gameState1, const std::multiset<uint32_t>& gameState2) {
-    if (gameState1.size() != gameState2.size()) return false;
-    for (auto it1 = gameState1.begin(), it2 = gameState2.begin(); it1 != gameState1.end(); ++it1, ++it2) {
-        if ((*it1) != (*it2)) return false;
-    }
-
-    return true;
-}
-
-template <class PieceStack>
-bool operator==(const std::vector<PieceStack>& pieceList1, const std::vector<PieceStack>& pieceList2) {
-    if (pieceList1.size() != pieceList2.size()) return false;
-    for (uint32_t i = 0; i < pieceList1.size(); ++i) {
-        if (pieceList1[i].height != pieceList2[i].height || pieceList1[i].count != pieceList2[i].count) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 MoveResult returnMove;
 std::string enumNames[] = {"Sun", "Moon", "Shooting Star", "Stars" };
 
 std::vector<std::vector<uint32_t>> getCombinations(uint32_t n, uint32_t r) {
-
     assert(n >= r);
     std::vector<std::vector<uint32_t>> result = std::vector<std::vector<uint32_t>>();
     std::vector<bool> v(n);   
@@ -109,16 +87,14 @@ std::vector<std::vector<uint32_t>> getCombinations(uint32_t n, uint32_t r) {
         result.push_back(combination);
     } while (std::next_permutation(v.begin(), v.end()));
 
-
     return result;
 }
-
 
 // recursive function, rewrite into iterative, this is the biggest choke point, exponential growth in color count
 // essentialy constrained orderless combinations
 void getAllGameStates
 (
-    std::vector<std::vector<uint32_t>> & result,
+    std::vector<std::vector<uint32_t>> & wResult,
     const std::vector<uint32_t> & optionPieceCount,
     const std::vector<uint32_t> & options,
     uint32_t optionIndex,
@@ -138,10 +114,10 @@ void getAllGameStates
         copy.push_back(options[i]);
       
         if (currentPieceCount + idPieceCount == maxPieceCount) {
-            result.push_back(copy);
+            wResult.push_back(copy);
         }
         else if (copy.size() < maxItemCount) {
-            getAllGameStates(result, optionPieceCount, options, i, maxItemCount, maxPieceCount, copy, currentPieceCount + idPieceCount);
+            getAllGameStates(wResult, optionPieceCount, options, i, maxItemCount, maxPieceCount, copy, currentPieceCount + idPieceCount);
         }
     }
 }
@@ -209,24 +185,77 @@ void generatePartitionIdMaps
     }
 }
 
-std::vector<std::multiset<uint32_t>> getPossibleNextStates
+std::vector<uint32_t> copyAndApplyPartitionIdChanges
 (
-    const std::multiset<uint32_t> & gameState,
+    const std::vector<uint32_t> & gameState,
+    // Both of these arrays will never be greater than 2, and always contains at least 1 entry each
+    // comes from the fact a move only effects two pieces
+    std::vector<uint32_t> remove,
+    std::vector<uint32_t> add
+) {
+    std::vector<uint32_t> result = std::vector<uint32_t>();
+    result.reserve(gameState.size() + add.size() - remove.size());
+    bool usedRemoves[2] = { false };
+    bool usedAdds[2] = { false };
+
+    for (uint32_t i = 0; i < gameState.size(); i++) {
+        if ((!usedRemoves[0] && gameState[i] == remove[0]) || (!usedRemoves[1] &&remove.size() > 1 && gameState[i] == remove[1])) {
+            if (!usedRemoves[0] && gameState[i] == remove[0]) {
+                usedRemoves[0] = true;
+                continue;
+            }
+            if (!usedRemoves[0] && remove.size() > 1 && gameState[i] == remove[1]) {
+                usedRemoves[1] = true;
+                continue;
+            }
+        }
+
+        if (!usedAdds[0] && gameState[i] > add[0]) {
+            if (!usedAdds[1] && add.size() > 1 && add[1] < add[0]) {
+                usedAdds[1] = true;
+                result.push_back(add[1]);
+            }
+            usedAdds[0] = true;
+            result.push_back(add[0]);
+        }
+
+        if (add.size() > 1 && !usedAdds[1] && gameState[i] > add[1]) {
+            usedAdds[1] = true;
+            result.push_back(add[1]); 
+        }
+
+        result.push_back(gameState[i]);
+    }
+    return result;
+}
+
+std::vector<std::vector<uint32_t>> getPossibleNextStates
+(
+    const std::vector<uint32_t> & gameState,
     const std::unordered_map<uint32_t, std::map<uint32_t, uint32_t>> & idToPartitionMap,
     const std::unordered_map<std::map<uint32_t, uint32_t>, uint32_t, PartitionHash>& partitionToIdMap,
     const std::vector<uint32_t> & pieceCountVec
 ) {
 
-    std::vector<std::multiset<uint32_t>> result = std::vector<std::multiset<uint32_t>>();
+    std::vector<std::vector<uint32_t>> result = std::vector<std::vector<uint32_t>>();
 
     std::vector<uint32_t> heightPartitionIds = std::vector<uint32_t>();
     std::vector<std::map<uint32_t, uint32_t>> heightPartitions = std::vector<std::map<uint32_t, uint32_t>>();
     std::vector<uint32_t> heightPartitionCount = std::vector<uint32_t>();
 
-    for (auto uniqueValue = gameState.begin(); uniqueValue != gameState.end(); uniqueValue = gameState.upper_bound(*uniqueValue)) {
-        heightPartitionIds.push_back((*uniqueValue));
-        heightPartitions.push_back(idToPartitionMap.at((*uniqueValue)));
-        heightPartitionCount.push_back(gameState.count((*uniqueValue)));
+    uint32_t currIdx = 0;
+    for (uint32_t i = 0; i < gameState.size(); ++i) {
+        if (gameState[currIdx] != gameState[i]) {
+            heightPartitionIds.push_back(gameState[currIdx]);
+            heightPartitionCount.push_back(i - currIdx);
+            heightPartitions.push_back(idToPartitionMap.at(gameState[currIdx]));
+            currIdx = i;
+        }
+        if (i == gameState.size() - 1) {
+            heightPartitionIds.push_back(gameState[currIdx]);
+            heightPartitionCount.push_back(i - currIdx + 1);
+            heightPartitions.push_back(idToPartitionMap.at(gameState[currIdx]));
+        }
     }
 
     // get new game states for when colors are same
@@ -239,10 +268,7 @@ std::vector<std::multiset<uint32_t>> getPossibleNextStates
                 if (heightPartitionCopy[(*it).first] == 2) heightPartitionCopy.erase((*it).first);                
                 else heightPartitionCopy[(*it).first] -=2;
                 ++heightPartitionCopy[pair.first + pair.first];
-                std::multiset<uint32_t> copy = gameState;
-                copy.erase(copy.lower_bound(heightPartitionIds[i]));
-                copy.insert(partitionToIdMap.at(heightPartitionCopy));
-                result.push_back(copy);
+                result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i] }, { partitionToIdMap.at(heightPartitionCopy) }));
             }
 
             
@@ -257,11 +283,8 @@ std::vector<std::multiset<uint32_t>> getPossibleNextStates
                 if (heightPartitionCopy[(*subIt).first] == 1)heightPartitionCopy.erase((*subIt).first);
                 else --heightPartitionCopy[(*subIt).first];
 
-                ++heightPartitionCopy[newHeight];
-                std::multiset<uint32_t> copy = gameState;
-                copy.erase(copy.lower_bound(heightPartitionIds[i]));
-                copy.insert(partitionToIdMap.at(heightPartitionCopy));
-                result.push_back(copy);                
+                ++heightPartitionCopy[newHeight];   
+                result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i] }, { partitionToIdMap.at(heightPartitionCopy) }));
             }
         }      
     }
@@ -283,14 +306,11 @@ std::vector<std::multiset<uint32_t>> getPossibleNextStates
                 else --heightPartitionCopyJ[pair.first];
 
                 ++heightPartitionCopyI[newHeight];
-
-                std::multiset<uint32_t> copy = gameState;
-                copy.erase(copy.lower_bound(heightPartitionIds[i]));
-                copy.erase(copy.lower_bound(heightPartitionIds[i]));
-
-                if (heightPartitionCopyI.size() > 0) copy.insert(partitionToIdMap.at(heightPartitionCopyI));
-                if (heightPartitionCopyJ.size() > 0) copy.insert(partitionToIdMap.at(heightPartitionCopyJ));
-                result.push_back(copy);
+             
+                std::vector<uint32_t> partitionIdsToAdd;
+                if (heightPartitionCopyI.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyI));
+                if (heightPartitionCopyJ.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyJ));
+                result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i], heightPartitionIds[i] }, partitionIdsToAdd));
             }
         }
 
@@ -312,14 +332,11 @@ std::vector<std::multiset<uint32_t>> getPossibleNextStates
                         else --heightPartitionCopyJ[pair.first];
 
                         ++heightPartitionCopyI[newHeight];
-
-                        std::multiset<uint32_t> copy = gameState;
-                        copy.erase(copy.lower_bound(heightPartitionIds[i]));
-                        copy.erase(copy.lower_bound(heightPartitionIds[j]));
-
-                        if (heightPartitionCopyI.size() > 0) copy.insert(partitionToIdMap.at(heightPartitionCopyI));
-                        if (heightPartitionCopyJ.size() > 0) copy.insert(partitionToIdMap.at(heightPartitionCopyJ));
-                        result.push_back(copy);
+                      
+                        std::vector<uint32_t> partitionIdsToAdd;
+                        if (heightPartitionCopyI.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyI));
+                        if (heightPartitionCopyJ.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyJ));
+                        result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i], heightPartitionIds[j] }, partitionIdsToAdd));
                     }
                     {
                         uint32_t newHeight = 2 * pair.first;
@@ -335,14 +352,11 @@ std::vector<std::multiset<uint32_t>> getPossibleNextStates
 
                         // diff on this line from above, symmetry for which height is on top
                         ++heightPartitionCopyJ[newHeight];
-
-                        std::multiset<uint32_t> copy = gameState;
-                        copy.erase(copy.lower_bound(heightPartitionIds[i]));
-                        copy.erase(copy.lower_bound(heightPartitionIds[j]));
-
-                        if (heightPartitionCopyI.size() > 0) copy.insert(partitionToIdMap.at(heightPartitionCopyI));
-                        if (heightPartitionCopyJ.size() > 0) copy.insert(partitionToIdMap.at(heightPartitionCopyJ));
-                        result.push_back(copy);
+                    
+                        std::vector<uint32_t> partitionIdsToAdd;
+                        if (heightPartitionCopyI.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyI));
+                        if (heightPartitionCopyJ.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyJ));
+                        result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i], heightPartitionIds[j] }, partitionIdsToAdd));
                     }
                 }
             }
@@ -354,9 +368,9 @@ std::vector<std::multiset<uint32_t>> getPossibleNextStates
 
 BranchResult SolunaAlgorithm
 (
-    const std::multiset<uint32_t> & gameState,
-    const std::unordered_map<std::multiset<uint32_t>, std::vector<std::multiset<uint32_t>>, GameStateHash>& moveMap,
-    std::unordered_map<std::multiset<uint32_t>, BranchResult, GameStateHash>& branchResultMap,
+    const std::vector<uint32_t> & gameState,
+    const std::unordered_map<std::vector<uint32_t>, std::vector<std::vector<uint32_t>>, GameStateHash>& moveMap,
+    std::unordered_map<std::vector<uint32_t>, BranchResult, GameStateHash>& branchResultMap,
     uint32_t parity = 0
 ) {
     auto cached = branchResultMap.find(gameState);
@@ -414,18 +428,16 @@ void getAllSymmertricBoardSpaces()
     std::vector<uint32_t> ids;
     generatePartitionIdMaps(partitionToIdMap, idToPartitionMap, idPieceCounts, ids);
 
-    std::vector<std::vector<uint32_t>> allGameStatesVector;
-    getAllGameStates(allGameStatesVector, idPieceCounts, ids, 0, COLOR_COUNT, PIECE_COUNT, {}, 0);
+    std::vector<std::vector<uint32_t>> allGameStates;
+    getAllGameStates(allGameStates, idPieceCounts, ids, 0, COLOR_COUNT, PIECE_COUNT, {}, 0);
 
-    std::vector<std::multiset<uint32_t>> allGameStates;
-    std::unordered_map<std::multiset<uint32_t>, std::vector<std::multiset<uint32_t>>, GameStateHash> moveMap;
+    std::unordered_map<std::vector<uint32_t>, std::vector<std::vector<uint32_t>>, GameStateHash> moveMap;
 
-    for (uint32_t i = 0; i < allGameStatesVector.size(); ++i) {
-        allGameStates.push_back(std::multiset<uint32_t>( allGameStatesVector[i].begin(), allGameStatesVector[i].end()) );
+    for (uint32_t i = 0; i < allGameStates.size(); ++i) {
         moveMap.insert({ allGameStates[i], getPossibleNextStates(allGameStates[i], idToPartitionMap, partitionToIdMap, idPieceCounts) });
     }
 
-    std::unordered_map<std::multiset<uint32_t>, BranchResult, GameStateHash> branchResultMap;
+    std::unordered_map<std::vector<uint32_t>, BranchResult, GameStateHash> branchResultMap;
     for (uint32_t i = 0; i < allGameStates.size(); ++i) {
         SolunaAlgorithm(allGameStates[i], moveMap, branchResultMap);
     }
