@@ -3,39 +3,4 @@
    uuid = "E76FFC8F-3E74-4E1B-A430-A844BA14068F"
    type = "1"
    version = "2.0">
-   <Breakpoints>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "89E137A2-EF02-4FEC-BFC9-3186A0A9BD5D"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "SolunaAlgorithm/main.cpp"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "388"
-            endingLineNumber = "388"
-            landmarkName = "SolunaAlgorithm(gameState, moveMap, branchResultMap)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "630BF16F-A10C-42CF-BF0B-F1FC20D95D04"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            condition = "result.size() == 2 &amp; result[0] == 0 &amp;&amp; result[1] == 5 "
-            continueAfterRunningActions = "No"
-            filePath = "SolunaAlgorithm/main.cpp"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "231"
-            endingLineNumber = "231"
-            landmarkName = "copyAndApplyPartitionIdChanges(gameState, remove, add)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-   </Breakpoints>
 </Bucket>
