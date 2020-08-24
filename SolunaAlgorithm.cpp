@@ -5,8 +5,11 @@
 #include <stdio.h>
 #include <assert.h> 
 #include <vector>
+#include <set>
+#include <map>
 #include <unordered_set>
 #include <unordered_map>
+#include <chrono>
 // copy of boosts hash_combine
 template <class T>
 inline void hash_combine(std::size_t& s, const T& v)
@@ -25,11 +28,6 @@ struct PieceStack {
     // count of pieces
 } typedef PieceStack;
 
-struct GameState {
-    uint32_t colorCount;
-    std::vector<PieceStack> pieceLists[COLOR_COUNT];
-}typedef GameState;
-
 struct MoveResult {
     uint32_t topColorIndex;
     uint32_t topSubIndex;
@@ -46,50 +44,43 @@ struct BranchResult {
 
 struct GameStateHash
 {
-    size_t operator()(const GameState& gameState) const {
-        size_t hsh = std::hash<uint32_t>{}(gameState.colorCount);
-        for (uint32_t i = 0; i < COLOR_COUNT; ++i) {            
-            for (uint32_t j = 0; j < gameState.pieceLists[i].size(); ++j) {
-                hash_combine<uint32_t>(hsh, gameState.pieceLists[i][j].height);
-                hash_combine<uint32_t>(hsh, gameState.pieceLists[i][j].count);
-            }
+    size_t operator()(const std::multiset<uint32_t>& gameState) const {
+        size_t hsh = std::hash<uint32_t>{}(gameState.size());
+        for (const auto id : gameState) {
+            // order matters!
+            hash_combine(hsh, id);
         }
-
         return hsh;
     }
 };
 
-struct ColorPieceVector {
-    size_t operator()(const std::vector<PieceStack> &pieceList) const {
-        size_t hsh = std::hash<uint32_t>{}(pieceList.size());
-        for (uint32_t i = 0; i < pieceList.size(); ++i) {
-            hash_combine<uint32_t>(hsh, pieceList[i].count);
-            hash_combine<uint32_t>(hsh, pieceList[i].height);
+struct PartitionHash {
+    size_t operator()(const std::map<uint32_t, uint32_t>& partition) const {
+        size_t hsh = std::hash<uint32_t>{}(partition.size());
+        for (const auto id : partition) {
+            // order matters!
+            hash_combine(hsh, id.first);
+            hash_combine(hsh, id.second);
         }
-
-        return 0;
+        return hsh;
     }
 };
+
+bool operator==(const std::multiset<uint32_t>& gameState1, const std::multiset<uint32_t>& gameState2) {
+    if (gameState1.size() != gameState2.size()) return false;
+    for (auto it1 = gameState1.begin(), it2 = gameState2.begin(); it1 != gameState1.end(); ++it1, ++it2) {
+        if ((*it1) != (*it2)) return false;
+    }
+
+    return true;
+}
+
 template <class PieceStack>
 bool operator==(const std::vector<PieceStack>& pieceList1, const std::vector<PieceStack>& pieceList2) {
     if (pieceList1.size() != pieceList2.size()) return false;
     for (uint32_t i = 0; i < pieceList1.size(); ++i) {
         if (pieceList1[i].height != pieceList2[i].height || pieceList1[i].count != pieceList2[i].count) {
             return false;
-        }
-    }
-
-    return true;
-}
-
-bool operator==(const GameState& gameState1, const GameState& gameState2) {
-    if (gameState1.colorCount != gameState2.colorCount) return false;
-    for (uint32_t i = 0; i < COLOR_COUNT; ++i) {
-        if (gameState1.pieceLists[i].size() != gameState2.pieceLists[i].size()) return false;
-        for (uint32_t j = 0; j < gameState1.pieceLists[i].size(); ++j) {
-            if (gameState1.pieceLists[i][j].height != gameState2.pieceLists[i][j].height || gameState1.pieceLists[i][j].count != gameState2.pieceLists[i][j].count) {
-                return false;
-            }
         }
     }
 
@@ -122,6 +113,39 @@ std::vector<std::vector<uint32_t>> getCombinations(uint32_t n, uint32_t r) {
     return result;
 }
 
+
+// recursive function, rewrite into iterative, this is the biggest choke point, exponential growth in color count
+// essentialy constrained orderless combinations
+void getAllGameStates
+(
+    std::vector<std::vector<uint32_t>> & result,
+    const std::vector<uint32_t> & optionPieceCount,
+    const std::vector<uint32_t> & options,
+    uint32_t optionIndex,
+    const uint32_t & maxItemCount,
+    const uint32_t & maxPieceCount,
+    std::vector<uint32_t> current,
+    uint32_t currentPieceCount  
+)
+{  
+    for (uint32_t i = optionIndex; i < options.size(); ++i) {
+
+        uint32_t idPieceCount = optionPieceCount[i];
+
+        if (idPieceCount + currentPieceCount > maxPieceCount) continue;
+       
+        std::vector<uint32_t> copy = current;
+        copy.push_back(options[i]);
+      
+        if (currentPieceCount + idPieceCount == maxPieceCount) {
+            result.push_back(copy);
+        }
+        else if (copy.size() < maxItemCount) {
+            getAllGameStates(result, optionPieceCount, options, i, maxItemCount, maxPieceCount, copy, currentPieceCount + idPieceCount);
+        }
+    }
+}
+
 std::vector<std::vector<uint32_t>> nextPartition(std::vector<std::vector<uint32_t>> a, uint32_t n)
 {
     std::vector<std::vector<uint32_t>> result = std::vector<std::vector<uint32_t>>();
@@ -147,237 +171,194 @@ std::vector<std::vector<uint32_t>> nextPartition(std::vector<std::vector<uint32_
     return result;
 }
 
-std::unordered_map<std::vector<PieceStack>, uint32_t, ColorPieceVector> generatePartitionIdMap()
+void generatePartitionIdMaps
+(
+    std::unordered_map<std::map<uint32_t, uint32_t>, uint32_t, PartitionHash> &partitionToIdMap,
+    std::unordered_map<uint32_t, std::map<uint32_t, uint32_t>> &idToPartitionMap,
+    std::vector<uint32_t> & idPieceCounts,
+    std::vector<uint32_t> & ids
+)
 {
-    std::unordered_map<std::vector<PieceStack>, uint32_t, ColorPieceVector> colorListToPartition = std::unordered_map < std::vector<PieceStack>, uint32_t, ColorPieceVector>();
+    partitionToIdMap = std::unordered_map<std::map<uint32_t, uint32_t>, uint32_t, PartitionHash>();
+    idToPartitionMap = std::unordered_map<uint32_t, std::map<uint32_t, uint32_t>>();
+    idPieceCounts = std::vector<uint32_t>();
+    ids = std::vector<uint32_t>();
 
     std::vector<std::vector<uint32_t>> heightCountPartition = std::vector<std::vector<uint32_t>>();
     uint32_t partitionId = 0;
     for (uint32_t i = 1; i <= PIECE_COUNT; ++i) {
         heightCountPartition = nextPartition(heightCountPartition, i);
         for (uint32_t j = 0; j < heightCountPartition.size(); ++j) {
-            std::vector<PieceStack> pieces = std::vector<PieceStack>();
+            std::map<uint32_t, uint32_t> partitionMap = std::map<uint32_t, uint32_t>();
             uint32_t nmbIdx = 0;
             for (uint32_t k = 0; k < heightCountPartition[j].size(); ++k) {                
                 if (heightCountPartition[j][k] != heightCountPartition[j][nmbIdx]) {
-                    pieces.push_back({ heightCountPartition[j][nmbIdx], (k - nmbIdx) });
+                    partitionMap.insert({ heightCountPartition[j][nmbIdx], (k - nmbIdx) });
                     nmbIdx = k;
                 }
                 if (k == heightCountPartition[j].size() - 1) {
-                    pieces.push_back({ heightCountPartition[j][nmbIdx], (k - nmbIdx) + 1 });
+                    partitionMap.insert({ heightCountPartition[j][nmbIdx], (k - nmbIdx) + 1 });
                 }
             }
-            colorListToPartition.insert({ pieces, partitionId });
+            ids.push_back(partitionId);
+            idPieceCounts.push_back(i);
+            partitionToIdMap.insert({ partitionMap, partitionId });
+            idToPartitionMap.insert({ partitionId, partitionMap });
             ++partitionId;
         }        
     }
-
-    return colorListToPartition;
 }
 
-GameState colorPartitionVectorToGameState(std::vector<uint32_t>& colorPartition, uint16_t height) {
-    GameState state = { 0 };
-    for (; state.colorCount < colorPartition.size(); ++state.colorCount) {
-        if (colorPartition[state.colorCount] == 0) break;
-        state.pieceLists[state.colorCount] = std::vector<PieceStack>();
-        state.pieceLists[state.colorCount].push_back({ height, colorPartition[state.colorCount] });
+std::vector<std::multiset<uint32_t>> getPossibleNextStates
+(
+    const std::multiset<uint32_t> & gameState,
+    const std::unordered_map<uint32_t, std::map<uint32_t, uint32_t>> & idToPartitionMap,
+    const std::unordered_map<std::map<uint32_t, uint32_t>, uint32_t, PartitionHash>& partitionToIdMap,
+    const std::vector<uint32_t> & pieceCountVec
+) {
+
+    std::vector<std::multiset<uint32_t>> result = std::vector<std::multiset<uint32_t>>();
+
+    std::vector<uint32_t> heightPartitionIds = std::vector<uint32_t>();
+    std::vector<std::map<uint32_t, uint32_t>> heightPartitions = std::vector<std::map<uint32_t, uint32_t>>();
+    std::vector<uint32_t> heightPartitionCount = std::vector<uint32_t>();
+
+    for (auto uniqueValue = gameState.begin(); uniqueValue != gameState.end(); uniqueValue = gameState.upper_bound(*uniqueValue)) {
+        heightPartitionIds.push_back((*uniqueValue));
+        heightPartitions.push_back(idToPartitionMap.at((*uniqueValue)));
+        heightPartitionCount.push_back(gameState.count((*uniqueValue)));
     }
-    return state;
-}
 
-std::vector<GameState> getBoardHeightSpaceSubColorSpace(std::vector<uint32_t> boardHeightSorted) {
-    uint32_t currentHeight = boardHeightSorted[0];
-    uint32_t i = 1;
-    while (i < boardHeightSorted.size() && boardHeightSorted[i] == currentHeight) {
-        ++i;
-    }
-
-    std::vector<std::vector<uint32_t>> colorPartition = std::vector<std::vector<uint32_t>>();
-    std::vector<std::vector<uint32_t>> partition = std::vector<std::vector<uint32_t>>();
-
-    for (uint32_t j = 1; j <= i; ++j)
-        partition = nextPartition(partition, j);
-    // constrained partition, remove all partitions with more than 4 numbers
-    for (uint32_t j = 0; j < partition.size(); ++j)
-        if (partition[j].size() <= COLOR_COUNT)
-            colorPartition.push_back(partition[j]);    
-
-    std::vector<GameState> result = std::vector<GameState>();
-    for (uint32_t j = 0; j < colorPartition.size(); ++j) {       
-        result.push_back(colorPartitionVectorToGameState(colorPartition[j], (uint16_t)currentHeight));
-    } 
-  
-    // merge other height groups
-    while (i < boardHeightSorted.size()) {
-        currentHeight = boardHeightSorted[i];
-        uint32_t count = 0;
-        while (i < boardHeightSorted.size() && boardHeightSorted[i] == currentHeight)
-        {
-            ++count;
-            ++i;
-        }
-
-        partition = std::vector<std::vector<uint32_t>>();
-        std::vector<std::vector<uint32_t>> mergingColorPartition = std::vector<std::vector<uint32_t>>();
-        for (uint32_t j = 1; j <= count; ++j)
-            partition = nextPartition(partition, j);
-        // constrained partition, remove all partitions with more than 4 numbers
-        for (uint32_t j = 0; j < partition.size(); ++j)
-            if (partition[j].size() <= COLOR_COUNT)
-                mergingColorPartition.push_back(partition[j]);
-
-        std::vector<GameState> nextResult = std::vector<GameState>();
-
-        for (uint32_t a = 0; a < mergingColorPartition.size(); ++a) {
-            std::vector<std::vector<uint32_t>> combinations = getCombinations(COLOR_COUNT, mergingColorPartition[a].size());
-            for (uint32_t j = 0; j < result.size(); ++j) {
-                for (uint32_t k = 0; k < combinations.size(); ++k) {
-                    GameState newGameState = result[j];                   
-                    for (uint32_t l = 0; l < combinations[k].size(); ++l) {                     
-                            newGameState.pieceLists[combinations[k][l]].push_back({ (uint16_t)currentHeight, mergingColorPartition[a][l] });
-                    }
-                    // recount colors
-                    for (uint32_t l = 0; l < COLOR_COUNT; ++l) {
-                        if (newGameState.pieceLists[l].size() != 0) ++newGameState.colorCount;
-                    }
-                    nextResult.push_back(newGameState);
-                }
+    // get new game states for when colors are same
+    for (uint32_t i = 0; i < heightPartitions.size(); ++i) {
+        for (auto it = heightPartitions[i].begin(); it != heightPartitions[i].end(); ++it) {
+            std::pair<uint32_t, uint32_t> pair = (*it);
+            // count of piece is more than one can merge with piece of same height and color
+            if (pair.second > 1) {
+                std::map<uint32_t, uint32_t> heightPartitionCopy = heightPartitions[i];
+                if (heightPartitionCopy[(*it).first] == 2) heightPartitionCopy.erase((*it).first);                
+                else heightPartitionCopy[(*it).first] -=2;
+                ++heightPartitionCopy[pair.first + pair.first];
+                std::multiset<uint32_t> copy = gameState;
+                copy.erase(copy.lower_bound(heightPartitionIds[i]));
+                copy.insert(partitionToIdMap.at(heightPartitionCopy));
+                result.push_back(copy);
             }
-        }
 
-        result = nextResult;
-    }    
-    return result;
-}
-
-std::vector<uint32_t> getSymmetries(const GameState & gameState) {
-
-    std::vector<uint32_t> result = std::vector<uint32_t>(COLOR_COUNT);
-
-    for (uint32_t i = 0; i < COLOR_COUNT; ++i)
-        result[i] = i;
-
-    for (uint32_t i = 0; i < COLOR_COUNT; ++i) {
-        if (result[i] != i) continue;
-        for (uint32_t j = i + 1; j < COLOR_COUNT; ++j) {
-            if (result[j] != j) continue;
-            if (gameState.pieceLists[i].size() != gameState.pieceLists[j].size()) continue;
-            if (gameState.pieceLists[i].size() == 0) {
-                continue;
-            }
-            for (uint32_t k = 0; k < gameState.pieceLists[i].size(); ++k) {
-                if (gameState.pieceLists[i][k].height != gameState.pieceLists[j][k].height || gameState.pieceLists[i][k].count != gameState.pieceLists[j][k].count) {
-                    break;
-                }
-                if (k == gameState.pieceLists[i].size() - 1) result[j] = i;
-            }
             
-        }
+            for (auto subIt = it; subIt != heightPartitions[i].end(); ++subIt) {
+                if (subIt == it) continue;               
+                std::pair<uint32_t, uint32_t> subPair = (*subIt);
+                uint32_t newHeight = pair.first + subPair.first;
+                std::map<uint32_t, uint32_t> heightPartitionCopy = heightPartitions[i];              
+                if (heightPartitionCopy[(*it).first] == 1)heightPartitionCopy.erase((*it).first);
+                else --heightPartitionCopy[(*it).first];
+
+                if (heightPartitionCopy[(*subIt).first] == 1)heightPartitionCopy.erase((*subIt).first);
+                else --heightPartitionCopy[(*subIt).first];
+
+                ++heightPartitionCopy[newHeight];
+                std::multiset<uint32_t> copy = gameState;
+                copy.erase(copy.lower_bound(heightPartitionIds[i]));
+                copy.insert(partitionToIdMap.at(heightPartitionCopy));
+                result.push_back(copy);                
+            }
+        }      
     }
-    return result;
-}
 
-std::vector<MoveResult> getPossibleMoves(const GameState & gameState) {
+    // get new game states when height states are the same
+    for (uint32_t i = 0; i < heightPartitions.size(); ++i) {
 
-    std::vector<MoveResult> result = std::vector<MoveResult>();
-    std::vector<uint32_t> symmetries = getSymmetries(gameState);
+        if (heightPartitionCount[i] > 1) {
+            for (auto it = heightPartitions[i].begin(); it != heightPartitions[i].end(); ++it) {
+                std::pair<uint32_t, uint32_t> pair = (*it);
+                uint32_t newHeight = 2 * pair.first;
 
-    for (uint32_t i = 0; i < COLOR_COUNT; ++i) {
-        if (symmetries[i] < i) continue;
-        // get intercolor moves
-        for (uint32_t j = 0; j < gameState.pieceLists[i].size(); ++j) {
-            if (gameState.pieceLists[i][j].count > 1) result.push_back({ i, j, i, j });
-            for (uint32_t k = j + 1; k < gameState.pieceLists[i].size(); ++k) {
-                result.push_back({ i, j, i, k });
+                std::map<uint32_t, uint32_t> heightPartitionCopyI = heightPartitions[i];                
+                if (heightPartitionCopyI[pair.first] == 1) heightPartitionCopyI.erase(pair.first);
+                else --heightPartitionCopyI[pair.first];
+
+                std::map<uint32_t, uint32_t> heightPartitionCopyJ = heightPartitions[i];                
+                if (heightPartitionCopyJ[pair.first] == 1)heightPartitionCopyJ.erase(pair.first);
+                else --heightPartitionCopyJ[pair.first];
+
+                ++heightPartitionCopyI[newHeight];
+
+                std::multiset<uint32_t> copy = gameState;
+                copy.erase(copy.lower_bound(heightPartitionIds[i]));
+                copy.erase(copy.lower_bound(heightPartitionIds[i]));
+
+                if (heightPartitionCopyI.size() > 0) copy.insert(partitionToIdMap.at(heightPartitionCopyI));
+                if (heightPartitionCopyJ.size() > 0) copy.insert(partitionToIdMap.at(heightPartitionCopyJ));
+                result.push_back(copy);
             }
         }
-    }
 
-    // runs max(height) * color, could switch to binary search, not a huge bottle neck
-    uint32_t height = 1;
-    bool exit = false;
-    std::vector<uint32_t> indices = std::vector<uint32_t>(COLOR_COUNT, 0);
-    do 
-    {
-        bool indicesExhausted = true;
+        for (auto it = heightPartitions[i].begin(); it != heightPartitions[i].end(); ++it) {
+            std::pair<uint32_t, uint32_t> pair = (*it);
+            
+            for (uint32_t j = i + 1; j < heightPartitions.size(); ++j) {
+                auto it = heightPartitions[j].find(pair.first);
+                if (it != heightPartitions[j].end()) {
+                    {
+                        uint32_t newHeight = 2 * pair.first;
 
-        std::vector<uint32_t> sameHeightsColorIndex = std::vector<uint32_t>();
-        std::vector<uint32_t> sameHeightsSubIndex = std::vector<uint32_t>();
+                        std::map<uint32_t, uint32_t> heightPartitionCopyI = heightPartitions[i];
+                        if (heightPartitionCopyI[pair.first] == 1) heightPartitionCopyI.erase(pair.first);                       
+                        else --heightPartitionCopyI[pair.first];
 
-        for (uint32_t i = 0; i < COLOR_COUNT; ++i) {                   
-            if (indices[i] < gameState.pieceLists[i].size()) {
-                indicesExhausted = false;
-                if (gameState.pieceLists[i][indices[i]].height == height) {
-                    sameHeightsColorIndex.push_back(i);
-                    sameHeightsSubIndex.push_back(indices[i]);
-                    ++indices[i];
-                }              
-            }
-        }       
+                        std::map<uint32_t, uint32_t> heightPartitionCopyJ = heightPartitions[j];                        
+                        if (heightPartitionCopyJ[pair.first] == 1)heightPartitionCopyJ.erase(pair.first);                        
+                        else --heightPartitionCopyJ[pair.first];
 
-        if (indicesExhausted) exit = true;
-        else {
-            for (uint32_t i = 0; i < sameHeightsColorIndex.size(); ++i) {
-                if (symmetries[sameHeightsColorIndex[i]] != sameHeightsColorIndex[i]) continue;
-                std::unordered_set<uint32_t> dupSet = std::unordered_set<uint32_t>();
-                for (uint32_t j = i + 1; j < sameHeightsColorIndex.size(); ++j)
-                {
-                    if (dupSet.count(symmetries[sameHeightsColorIndex[j]]) == 1) continue;
-                    dupSet.insert(symmetries[sameHeightsColorIndex[j]]);
-                    result.push_back({ sameHeightsColorIndex[i], sameHeightsSubIndex[i], sameHeightsColorIndex[j], sameHeightsSubIndex[j] });
-                    if (symmetries[sameHeightsColorIndex[j]] != sameHeightsColorIndex[i]) {
-                        result.push_back({ sameHeightsColorIndex[j], sameHeightsSubIndex[j], sameHeightsColorIndex[i], sameHeightsSubIndex[i] });
+                        ++heightPartitionCopyI[newHeight];
+
+                        std::multiset<uint32_t> copy = gameState;
+                        copy.erase(copy.lower_bound(heightPartitionIds[i]));
+                        copy.erase(copy.lower_bound(heightPartitionIds[j]));
+
+                        if (heightPartitionCopyI.size() > 0) copy.insert(partitionToIdMap.at(heightPartitionCopyI));
+                        if (heightPartitionCopyJ.size() > 0) copy.insert(partitionToIdMap.at(heightPartitionCopyJ));
+                        result.push_back(copy);
+                    }
+                    {
+                        uint32_t newHeight = 2 * pair.first;
+
+                        std::map<uint32_t, uint32_t> heightPartitionCopyI = heightPartitions[i];
+                        if (heightPartitionCopyI[pair.first] == 1) heightPartitionCopyI.erase(pair.first);
+                        else --heightPartitionCopyI[pair.first];
+
+                        std::map<uint32_t, uint32_t> heightPartitionCopyJ = heightPartitions[j];
+                        if (heightPartitionCopyJ[pair.first] == 1)heightPartitionCopyJ.erase(pair.first);
+                        else --heightPartitionCopyJ[pair.first];
+
+
+                        // diff on this line from above, symmetry for which height is on top
+                        ++heightPartitionCopyJ[newHeight];
+
+                        std::multiset<uint32_t> copy = gameState;
+                        copy.erase(copy.lower_bound(heightPartitionIds[i]));
+                        copy.erase(copy.lower_bound(heightPartitionIds[j]));
+
+                        if (heightPartitionCopyI.size() > 0) copy.insert(partitionToIdMap.at(heightPartitionCopyI));
+                        if (heightPartitionCopyJ.size() > 0) copy.insert(partitionToIdMap.at(heightPartitionCopyJ));
+                        result.push_back(copy);
                     }
                 }
-            }            
+            }
         }
-        ++height;
-    } while (!exit);
+    }
+    
     return result;
-}
-
-GameState applyMoveToGameState(const GameState& gameState, MoveResult move)
-{
-    GameState newGameState = gameState;
-    uint32_t newHeight = newGameState.pieceLists[move.bottomColorIndex][move.bottomSubIndex].height + newGameState.pieceLists[move.topColorIndex][move.topSubIndex].height;
-    --newGameState.pieceLists[move.bottomColorIndex][move.bottomSubIndex].count;
-    if (newGameState.pieceLists[move.bottomColorIndex][move.bottomSubIndex].count == 0) {
-        for (uint32_t i = move.bottomSubIndex; i < newGameState.pieceLists[move.bottomColorIndex].size() - 1; ++i) {
-            newGameState.pieceLists[move.bottomColorIndex][i] = newGameState.pieceLists[move.bottomColorIndex][i + 1];
-        }
-        newGameState.pieceLists[move.bottomColorIndex].resize(newGameState.pieceLists[move.bottomColorIndex].size() - 1);
-    }
-
-    --newGameState.pieceLists[move.topColorIndex][move.topSubIndex].count;
-    if (newGameState.pieceLists[move.topColorIndex][move.topSubIndex].count == 0) {
-        for (uint32_t i = move.topSubIndex; i < newGameState.pieceLists[move.topColorIndex].size() - 1; ++i) {
-            newGameState.pieceLists[move.topColorIndex][i] = newGameState.pieceLists[move.topColorIndex][i + 1];
-        }
-        newGameState.pieceLists[move.topColorIndex].resize(newGameState.pieceLists[move.topColorIndex].size() - 1);
-    }
-
-    for (uint32_t i = move.topSubIndex; i < newGameState.pieceLists[move.topColorIndex].size(); ++i) {
-        if (newGameState.pieceLists[move.topColorIndex][i].height == newHeight) {
-            ++newGameState.pieceLists[move.topColorIndex][i].count;
-            break;
-        }
-        else if (newGameState.pieceLists[move.topColorIndex][i].height > newHeight || i == newGameState.pieceLists[move.topColorIndex].size() - 1) {
-            newGameState.pieceLists[move.topColorIndex].insert(newGameState.pieceLists[move.topColorIndex].begin() + i, { {newHeight, 1 } });
-            break;
-        }
-    }
-
-    return newGameState;
 }
 
 BranchResult SolunaAlgorithm
 (
-    const GameState gameState,
-    std::unordered_map<GameState, std::vector<MoveResult>, GameStateHash>& moveMap,
-    std::unordered_map<GameState, BranchResult, GameStateHash>& branchResultMap,
+    const std::multiset<uint32_t> & gameState,
+    const std::unordered_map<std::multiset<uint32_t>, std::vector<std::multiset<uint32_t>>, GameStateHash>& moveMap,
+    std::unordered_map<std::multiset<uint32_t>, BranchResult, GameStateHash>& branchResultMap,
     uint32_t parity = 0
-    )
-{
+) {
     auto cached = branchResultMap.find(gameState);
     if (cached != branchResultMap.end()) {
         return cached->second;
@@ -386,10 +367,11 @@ BranchResult SolunaAlgorithm
     const bool opponentsTurn = (parity % 2);
 
     assert(moveMap.find(gameState) != moveMap.end());
-    std::vector<MoveResult> moves = moveMap[gameState];
+
+    auto moveStates = moveMap.at(gameState);
 
     // leaf node
-    if (moves.size() == 0) {
+    if (moveStates.size() == 0) {
         BranchResult result = { 1, (opponentsTurn ? 1u : 0u), opponentsTurn };
         branchResultMap.insert({ gameState, result });
         return result;
@@ -397,16 +379,14 @@ BranchResult SolunaAlgorithm
 
     BranchResult result = { 0, 0, false };
 
-    for (const auto move : moves)
-    {
-        const GameState newGameState = applyMoveToGameState(gameState, move);
-
+    for (const auto newGameState : moveStates)
+    {    
         const BranchResult branchResult = SolunaAlgorithm(newGameState, moveMap, branchResultMap, parity + 1);
 
         // on your turn if there exists a branch where you win return true
         if (!opponentsTurn && branchResult.guaranteedWin) {
             if (parity == 0) {
-                returnMove = move;
+                // returnMove = move;
             }
             result.guaranteedWin = true;
         }
@@ -414,7 +394,6 @@ BranchResult SolunaAlgorithm
         result.leafCount += branchResult.leafCount;
         result.leafVictory += branchResult.leafVictory;
     }
-
 
     // choose best path here
     if (!opponentsTurn && !result.guaranteedWin) {
@@ -427,35 +406,34 @@ BranchResult SolunaAlgorithm
 
 void getAllSymmertricBoardSpaces()
 {
-    std::vector<std::vector<uint32_t>> heightPartition = std::vector<std::vector<uint32_t>>();
-    for (uint32_t i = 1; i <= PIECE_COUNT; ++i) {
-        heightPartition = nextPartition(heightPartition, i);
+    auto start = std::chrono::system_clock::now();
+    std::unordered_map<std::map<uint32_t, uint32_t>, uint32_t, PartitionHash> partitionToIdMap;
+    std::unordered_map<uint32_t, std::map<uint32_t, uint32_t>> idToPartitionMap;
+    // essentially just the sum of ids
+    std::vector<uint32_t> idPieceCounts;
+    std::vector<uint32_t> ids;
+    generatePartitionIdMaps(partitionToIdMap, idToPartitionMap, idPieceCounts, ids);
+
+    std::vector<std::vector<uint32_t>> allGameStatesVector;
+    getAllGameStates(allGameStatesVector, idPieceCounts, ids, 0, COLOR_COUNT, PIECE_COUNT, {}, 0);
+
+    std::vector<std::multiset<uint32_t>> allGameStates;
+    std::unordered_map<std::multiset<uint32_t>, std::vector<std::multiset<uint32_t>>, GameStateHash> moveMap;
+
+    for (uint32_t i = 0; i < allGameStatesVector.size(); ++i) {
+        allGameStates.push_back(std::multiset<uint32_t>( allGameStatesVector[i].begin(), allGameStatesVector[i].end()) );
+        moveMap.insert({ allGameStates[i], getPossibleNextStates(allGameStates[i], idToPartitionMap, partitionToIdMap, idPieceCounts) });
     }
 
-    std::unordered_set<GameState, GameStateHash> allGameStates = std::unordered_set<GameState, GameStateHash>();
-    for (uint32_t i = 0; i < heightPartition.size(); ++i) {
-        // returns dupes!!!
-        std::vector<GameState> gameStates = getBoardHeightSpaceSubColorSpace(heightPartition[i]);
-        for (uint32_t j = 0; j < gameStates.size(); ++j)
-            if (allGameStates.insert(gameStates[j]).second == false) {
-                std::cout << std::endl;
-            }
+    std::unordered_map<std::multiset<uint32_t>, BranchResult, GameStateHash> branchResultMap;
+    for (uint32_t i = 0; i < allGameStates.size(); ++i) {
+        SolunaAlgorithm(allGameStates[i], moveMap, branchResultMap);
     }
 
-    std::unordered_map<GameState, std::vector<MoveResult>, GameStateHash> moveMap = std::unordered_map<GameState, std::vector<MoveResult>, GameStateHash>();
-
-    // std::unordered_map<std::vector<PieceStack>, uint32_t, ColorPieceVector> A = generatePartitionIdMap();
-    for (auto const& gameState : allGameStates) {      
-        std::vector<MoveResult> moves = getPossibleMoves(gameState);
-
-        moveMap.insert({ gameState, moves });
-    }
-    
-    std::unordered_map<GameState, BranchResult, GameStateHash> branchMap = std::unordered_map<GameState, BranchResult, GameStateHash>();
-
-    for (auto const& gameState : allGameStates) {
-        branchMap.insert({ gameState, SolunaAlgorithm(gameState, moveMap, branchMap) });
-    }
+    auto end = std::chrono::system_clock::now();
+    auto duration = (end - start);
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+    std::cout << "\r" << millis << std::endl;
 }
 
 int main()
