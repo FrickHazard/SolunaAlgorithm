@@ -422,7 +422,6 @@ BranchResult SolunaAlgorithm
 
 void getAllSymmertricBoardSpaces()
 {
-    auto start = std::chrono::system_clock::now();
     std::unordered_map<std::map<uint32_t, uint32_t>, uint32_t, PartitionHash> partitionToIdMap;
     std::unordered_map<uint32_t, std::map<uint32_t, uint32_t>> idToPartitionMap;
     // essentially just the sum of ids
@@ -443,15 +442,17 @@ void getAllSymmertricBoardSpaces()
     for (uint32_t i = 0; i < allGameStates.size(); ++i) {
         SolunaAlgorithm(allGameStates[i], moveMap, branchResultMap);
     }
-
-    auto end = std::chrono::system_clock::now();
-    auto duration = (end - start);
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-    std::cout << "\r" << millis << std::endl;
 }
 
 int main()
 {
-    getAllSymmertricBoardSpaces();
+    const uint32_t epoc = 200;
+    auto start = std::chrono::system_clock::now();
+    for (uint32_t i = 0; i < epoc; ++i)
+        getAllSymmertricBoardSpaces();
+    auto end = std::chrono::system_clock::now();
+    auto duration = (end - start);
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() / epoc;
+    std::cout << millis << std::endl;
     return 0;
 }
