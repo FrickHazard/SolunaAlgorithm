@@ -21,18 +21,10 @@ enum PieceId { Sun = 0, Moon = 1, ShootingStar = 2, Stars = 3 };
 #define COLOR_COUNT 4u
 #define PIECE_COUNT 12u
 
-struct PieceStack {
-    uint32_t height;
+struct PartitionNumber {
+    uint32_t number;
     uint32_t count;
-    // count of pieces
 } typedef PieceStack;
-
-struct MoveResult {
-    uint32_t topColorIndex;
-    uint32_t topSubIndex;
-    uint32_t bottomColorIndex;
-    uint32_t bottomSubIndex;
-} typedef MoveResult;
 
 struct BranchResult {
     uint32_t leafCount;
@@ -53,18 +45,17 @@ struct GameStateHash {
 };
 
 struct PartitionHash {
-    size_t operator()(const std::map<uint32_t, uint32_t>& partition) const {
+    size_t operator()(const std::vector<PartitionNumber>& partition) const {
         size_t hsh = std::hash<uint32_t>{}((uint32_t)partition.size());
-        for (const auto & id : partition) {
+        for (uint32_t i = 0;  i < partition.size(); ++i) {
             // order matters!
-            hash_combine(hsh, id.first);
-            hash_combine(hsh, id.second);
+            hash_combine(hsh, partition[i].number);
+            hash_combine(hsh, partition[i].count);
         }
         return hsh;
     }
 };
 
-MoveResult returnMove;
 std::string enumNames[] = {"Sun", "Moon", "Shooting Star", "Stars" };
 
 // recursive function, rewrite into iterative, this is the biggest choke point, exponential growth in color count
@@ -99,67 +90,111 @@ void getAllGameStates
     }
 }
 
-std::vector<std::vector<uint32_t>> nextPartition(std::vector<std::vector<uint32_t>> a, uint32_t n)
+std::vector<std::vector<PartitionNumber>> nextPartition(std::vector<std::vector<PartitionNumber>> prevPartition, uint32_t n)
 {
-    std::vector<std::vector<uint32_t>> result;
-    for (uint32_t i = 0; i < a.size(); i++)
+    std::vector<std::vector<PartitionNumber>> result;
+    for (uint32_t i = 0; i < prevPartition.size(); i++)
     {
-        std::vector<uint32_t> withOne;
-        withOne.push_back(1);
+        std::vector<PartitionNumber> withOne;
+        if (prevPartition[i][0].number != 1) {
+            withOne.push_back({ 1, 1 });
+        }
 
-        for (uint32_t j = 0; j < a[i].size(); j++) {
-            if (j == 1 && a[i][0] < a[i][1]) {
-                std::vector<uint32_t> permutation;
-                permutation.push_back(a[i][0] + 1);
-                for (uint32_t k = 1; k < a[i].size(); k++) {
-                    permutation.push_back(a[i][k]);
+        for (uint32_t j = 0; j < prevPartition[i].size(); j++) {
+            if (j == 1 && prevPartition[i][0].number < prevPartition[i][1].number && prevPartition[i][0].count == 1) {
+                std::vector<PartitionNumber> permutation;
+                if (prevPartition[i][0].number + 1 != prevPartition[i][1].number) {
+                    permutation.push_back({ prevPartition[i][0].number + 1, prevPartition[i][0].count });
+                }
+                for (uint32_t k = 1; k < prevPartition[i].size(); k++) {
+                    permutation.push_back(prevPartition[i][k]);
+                    if (k == 1 && prevPartition[i][0].number + 1 == prevPartition[i][1].number) {
+                        ++permutation[0].count;
+                    }
                 }
                 result.push_back(permutation);
             }
-            withOne.push_back(a[i][j]);
+            
+            withOne.push_back(prevPartition[i][j]);
+            
+            if (j == 0 && prevPartition[i][j].number == 1)
+                ++withOne[0].count;
         }
         result.push_back(withOne);
     }
-    result.push_back({ n });
+    result.push_back({ { n, 1 } });
     return result;
 }
 
 void generatePartitionIdMaps
 (
-    std::unordered_map<std::map<uint32_t, uint32_t>, uint32_t, PartitionHash> &partitionToIdMap,
-    std::unordered_map<uint32_t, std::map<uint32_t, uint32_t>> &idToPartitionMap,
+    std::unordered_map<std::vector<PartitionNumber>, uint32_t, PartitionHash> &partitionToIdMap,
+    std::unordered_map<uint32_t, std::vector<PartitionNumber>> &idToPartitionMap,
     std::vector<uint32_t> & idPieceCounts,
     std::vector<uint32_t> & ids
 )
 {
-    partitionToIdMap = std::unordered_map<std::map<uint32_t, uint32_t>, uint32_t, PartitionHash>();
-    idToPartitionMap = std::unordered_map<uint32_t, std::map<uint32_t, uint32_t>>();
+    partitionToIdMap = std::unordered_map<std::vector<PartitionNumber>, uint32_t, PartitionHash>();
+    idToPartitionMap = std::unordered_map<uint32_t, std::vector<PartitionNumber>>();
     idPieceCounts = std::vector<uint32_t>();
     ids = std::vector<uint32_t>();
 
-    std::vector<std::vector<uint32_t>> heightCountPartition;
+    std::vector<std::vector<PartitionNumber>> heightCountPartition;
     uint32_t partitionId = 0;
     for (uint32_t i = 1; i <= PIECE_COUNT; ++i) {
         heightCountPartition = nextPartition(heightCountPartition, i);
         for (uint32_t j = 0; j < heightCountPartition.size(); ++j) {
-            std::map<uint32_t, uint32_t> partitionMap = std::map<uint32_t, uint32_t>();
-            uint32_t nmbIdx = 0;
-            for (uint32_t k = 0; k < heightCountPartition[j].size(); ++k) {
-                if (heightCountPartition[j][k] != heightCountPartition[j][nmbIdx]) {
-                    partitionMap.insert({ heightCountPartition[j][nmbIdx], (k - nmbIdx) });
-                    nmbIdx = k;
-                }
-                if (k == heightCountPartition[j].size() - 1) {
-                    partitionMap.insert({ heightCountPartition[j][nmbIdx], (k - nmbIdx) + 1 });
-                }
-            }
             ids.push_back(partitionId);
             idPieceCounts.push_back(i);
-            partitionToIdMap.insert({ partitionMap, partitionId });
-            idToPartitionMap.insert({ partitionId, partitionMap });
+            partitionToIdMap.insert({ heightCountPartition[j], partitionId });
+            idToPartitionMap.insert({ partitionId, heightCountPartition[j] });
             ++partitionId;
         }
     }
+}
+
+std::vector<PartitionNumber> copyAndApplyPartitionChanges
+(
+   const std::vector<PartitionNumber> & partition,
+   std::vector<uint32_t> remove,
+   std::vector<uint32_t> add
+) {
+    std::vector<uint32_t> result;
+    if (add.size() > 1 && add[1] < add[0]) std::swap(add[0], add[1]);
+    
+    bool usedRemoves[2] = { false };
+    bool usedAdds[2] = { false };
+
+    for (uint32_t i = 0; i < partition.size(); i++) {
+        bool addThisNumb = true;
+        if ((!usedRemoves[0] && partition[i].number == remove[0].number) || (!usedRemoves[1] && remove.size() > 1 && gameState[i] == remove[1])) {
+            if (!usedRemoves[0] && gameState[i] == remove[0]) {
+                usedRemoves[0] = true;
+            }
+            else {
+                usedRemoves[1] = true;
+            }
+            addThisNumb = false;
+        }
+
+        if (!usedAdds[0] && gameState[i] > add[0]) {
+            usedAdds[0] = true;
+            result.push_back(add[0]);
+        }
+
+        if (add.size() > 1 && !usedAdds[1] && gameState[i] > add[1]) {
+            usedAdds[1] = true;
+            result.push_back(add[1]);
+        }
+
+        if (addThisNumb) result.push_back(gameState[i]);
+        
+        if (i == gameState.size() - 1) {
+            if (!usedAdds[0]) result.push_back(add[0]);
+            if (!usedAdds[1] && add.size() > 1) result.push_back(add[1]);
+        }
+    }
+    return result;
 }
 
 std::vector<uint32_t> copyAndApplyPartitionIdChanges
@@ -213,17 +248,16 @@ std::vector<uint32_t> copyAndApplyPartitionIdChanges
 std::vector<std::vector<uint32_t>> getPossibleNextStates
 (
     const std::vector<uint32_t> & gameState,
-    const std::unordered_map<uint32_t, std::map<uint32_t, uint32_t>> & idToPartitionMap,
-    const std::unordered_map<std::map<uint32_t, uint32_t>, uint32_t, PartitionHash>& partitionToIdMap,
+    const std::unordered_map<uint32_t, std::vector<PartitionNumber>> & idToPartitionMap,
+    const std::unordered_map<std::vector<PartitionNumber>, uint32_t, PartitionHash>& partitionToIdMap,
     const std::vector<uint32_t> & pieceCountVec
 ) {
-
     std::vector<std::vector<uint32_t>> result;
 
     std::vector<uint32_t> heightPartitionIds;
-    std::vector<std::map<uint32_t, uint32_t>> heightPartitions;
+    std::vector<std::vector<PartitionNumber>> heightPartitions;
     std::vector<uint32_t> heightPartitionCount;
-
+    // get unique gameStates
     uint32_t currIdx = 0;
     for (uint32_t i = 0; i < gameState.size(); ++i) {
         if (gameState[currIdx] != gameState[i]) {
@@ -241,107 +275,148 @@ std::vector<std::vector<uint32_t>> getPossibleNextStates
 
     // get new game states for when colors are same
     for (uint32_t i = 0; i < heightPartitions.size(); ++i) {
-        for (auto it = heightPartitions[i].begin(); it != heightPartitions[i].end(); ++it) {
-            std::pair<uint32_t, uint32_t> pair = (*it);
-            // count of piece is more than one can merge with piece of same height and color
-            if (pair.second > 1) {
-                std::map<uint32_t, uint32_t> heightPartitionCopy = heightPartitions[i];
-                if (heightPartitionCopy[(*it).first] == 2) heightPartitionCopy.erase((*it).first);
-                else heightPartitionCopy[(*it).first] -=2;
-                ++heightPartitionCopy[pair.first + pair.first];
-                result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i] }, { partitionToIdMap.at(heightPartitionCopy) }));
+        for (uint32_t it = 0; it < heightPartitions[i].size(); ++it) {
+            PartitionNumber partitionNumb = heightPartitions[i][it];
+            // If the count of pieces is more than one, we can merge with piece of same height and color
+            if (partitionNumb.count > 1) {
+                std::vector<PartitionNumber> updatedPartition = copyAndApplyPartitionChanges(heightPartitions[i], { partitionNumb.number, partitionNumb.number }, {partitionNumb.number + partitionNumb.number });
+                result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i] }, { partitionToIdMap.at(updatedPartition) }));
             }
             
-            for (auto subIt = it; subIt != heightPartitions[i].end(); ++subIt) {
+            // for every other piece of same color, but different height, we consider a symmetric merge of the two pieces
+            for (uint32_t subIt = it; subIt < heightPartitions[i].size(); ++subIt) {
                 if (subIt == it) continue;
-                std::pair<uint32_t, uint32_t> subPair = (*subIt);
-                uint32_t newHeight = pair.first + subPair.first;
-                std::map<uint32_t, uint32_t> heightPartitionCopy = heightPartitions[i];
-                if (heightPartitionCopy[(*it).first] == 1)heightPartitionCopy.erase((*it).first);
-                else --heightPartitionCopy[(*it).first];
-
-                if (heightPartitionCopy[(*subIt).first] == 1)heightPartitionCopy.erase((*subIt).first);
-                else --heightPartitionCopy[(*subIt).first];
-
-                ++heightPartitionCopy[newHeight];
-                result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i] }, { partitionToIdMap.at(heightPartitionCopy) }));
+                PartitionNumber partitionNumbOther = heightPartitions[i][subIt];
+                
+                std::vector<PartitionNumber> updatedPartition = copyAndApplyPartitionChanges(heightPartitions[i], { partitionNumb.number, partitionNumb.number }, {partitionNumb.number + partitionNumbOther.number });
+                result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i] }, { partitionToIdMap.at(updatedPartition) }));
             }
         }
     }
 
     // get new game states when height states are the same
     for (uint32_t i = 0; i < heightPartitions.size(); ++i) {
-        // if there is a symmetric partition we only generate moves one way
+        // if there are equivalent height/piece count partitions, we consider a symmetric merge for every, pair of equal height pieces
+        // we only do this once, even if there are 3 equivelent partitions, as doing it again would be symmetric
         if (heightPartitionCount[i] > 1) {
-            for (auto it = heightPartitions[i].begin(); it != heightPartitions[i].end(); ++it) {
-                std::pair<uint32_t, uint32_t> pair = (*it);
-                uint32_t newHeight = 2 * pair.first;
-
-                std::map<uint32_t, uint32_t> heightPartitionCopyI = heightPartitions[i];
-                if (heightPartitionCopyI[pair.first] == 1) heightPartitionCopyI.erase(pair.first);
-                else --heightPartitionCopyI[pair.first];
-
-                std::map<uint32_t, uint32_t> heightPartitionCopyJ = heightPartitions[i];
-                if (heightPartitionCopyJ[pair.first] == 1)heightPartitionCopyJ.erase(pair.first);
-                else --heightPartitionCopyJ[pair.first];
-
-                ++heightPartitionCopyI[newHeight];
+            for (uint32_t it = 0; it < heightPartitions[i].size(); ++it) {
+                PartitionNumber partitionNumb = heightPartitions[i][it];
+                
+                std::vector<PartitionNumber> updatedPartition1 = copyAndApplyPartitionChanges(heightPartitions[i], { partitionNumb.number }, { });
+                
+                std::vector<PartitionNumber> updatedPartition2 = copyAndApplyPartitionChanges(heightPartitions[i], { partitionNumb.number }, {partitionNumb.number + partitionNumb.number });
              
                 std::vector<uint32_t> partitionIdsToAdd;
-                if (heightPartitionCopyI.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyI));
-                if (heightPartitionCopyJ.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyJ));
+                if (updatedPartition1.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(updatedPartition1));
+                if (updatedPartition2.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(updatedPartition2));
                 result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i], heightPartitionIds[i] }, partitionIdsToAdd));
             }
         }
-
-        for (auto it = heightPartitions[i].begin(); it != heightPartitions[i].end(); ++it) {
-            std::pair<uint32_t, uint32_t> pair = (*it);
-            
-            for (uint32_t j = i + 1; j < heightPartitions.size(); ++j) {
-                auto it = heightPartitions[j].find(pair.first);
-                if (it != heightPartitions[j].end()) {
-                    {
-                        uint32_t newHeight = 2 * pair.first;
-
-                        std::map<uint32_t, uint32_t> heightPartitionCopyI = heightPartitions[i];
-                        if (heightPartitionCopyI[pair.first] == 1) heightPartitionCopyI.erase(pair.first);
-                        else --heightPartitionCopyI[pair.first];
-
-                        std::map<uint32_t, uint32_t> heightPartitionCopyJ = heightPartitions[j];
-                        if (heightPartitionCopyJ[pair.first] == 1)heightPartitionCopyJ.erase(pair.first);
-                        else --heightPartitionCopyJ[pair.first];
-
-                        ++heightPartitionCopyI[newHeight];
-                      
-                        std::vector<uint32_t> partitionIdsToAdd;
-                        if (heightPartitionCopyI.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyI));
-                        if (heightPartitionCopyJ.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyJ));
-                        result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i], heightPartitionIds[j] }, partitionIdsToAdd));
-                    }
-                    {
-                        uint32_t newHeight = 2 * pair.first;
-
-                        std::map<uint32_t, uint32_t> heightPartitionCopyI = heightPartitions[i];
-                        if (heightPartitionCopyI[pair.first] == 1) heightPartitionCopyI.erase(pair.first);
-                        else --heightPartitionCopyI[pair.first];
-
-                        std::map<uint32_t, uint32_t> heightPartitionCopyJ = heightPartitions[j];
-                        if (heightPartitionCopyJ[pair.first] == 1)heightPartitionCopyJ.erase(pair.first);
-                        else --heightPartitionCopyJ[pair.first];
-
-
-                        // diff on this line from above, symmetry for which height is on top
-                        ++heightPartitionCopyJ[newHeight];
-                    
-                        std::vector<uint32_t> partitionIdsToAdd;
-                        if (heightPartitionCopyI.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyI));
-                        if (heightPartitionCopyJ.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyJ));
-                        result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i], heightPartitionIds[j] }, partitionIdsToAdd));
-                    }
-                }
+    }
+    
+    std::vector<uint32_t> indices =  std::vector<uint32_t>(heightPartitions.size(), 0);
+    
+    while (true) {
+        uint32_t minNumb = UINT32_MAX;
+        
+        std::vector<uint32_t> minIndices;
+        minIndices.reserve(indices.size());
+        
+        for (uint32_t i = 0; i < indices.size(); ++i) {
+            if (indices[i] == heightPartitions[i].size()) continue;
+            if (heightPartitions[i][indices[i]].number < minNumb) {
+                minIndices.clear();
+                minNumb = heightPartitions[i][indices[i]].number;
+                minIndices.push_back(i);
+            }
+            else if (heightPartitions[i][indices[i]].number == minNumb) {
+                 minIndices.push_back(i);
             }
         }
-    }    
+        
+        for (uint32_t i = 0; i < minIndices.size(); ++i) {
+            for (uint32_t j = i + 1; j < minIndices.size(); ++j) {
+                {
+                    PartitionNumber partitionNumb = heightPartitions[minIndices[i]][indices[minIndices[i]]];
+                    
+                    std::vector<PartitionNumber> updatedPartition1 = copyAndApplyPartitionChanges(heightPartitions[minIndices[i]], { partitionNumb.number }, { });
+                    
+                    std::vector<PartitionNumber> updatedPartition2 = copyAndApplyPartitionChanges(heightPartitions[minIndices[j]], { partitionNumb.number }, {partitionNumb.number + partitionNumb.number });
+                    
+                    std::vector<uint32_t> partitionIdsToAdd;
+                    if (updatedPartition1.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(updatedPartition1));
+                    if (updatedPartition2.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(updatedPartition2));
+                    result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[minIndices[i]], heightPartitionIds[minIndices[j]] }, partitionIdsToAdd));
+                }
+                {
+                    PartitionNumber partitionNumb = heightPartitions[minIndices[i]][indices[minIndices[i]]];
+                                       
+                   std::vector<PartitionNumber> updatedPartition1 = copyAndApplyPartitionChanges(heightPartitions[minIndices[i]], { partitionNumb.number }, { partitionNumb.number + partitionNumb.number });
+                   
+                   std::vector<PartitionNumber> updatedPartition2 = copyAndApplyPartitionChanges(heightPartitions[minIndices[j]], { partitionNumb.number }, { });
+                   
+                   std::vector<uint32_t> partitionIdsToAdd;
+                   if (updatedPartition1.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(updatedPartition1));
+                   if (updatedPartition2.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(updatedPartition2));
+                   result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[minIndices[i]], heightPartitionIds[minIndices[j]] }, partitionIdsToAdd));
+                }
+            }
+            ++indices[minIndices[i]];
+        }
+        
+        if (minIndices.size() == 0) break;
+    }
+        
+
+//
+//        for (auto it = heightPartitions[i].begin(); it != heightPartitions[i].end(); ++it) {
+//            std::pair<uint32_t, uint32_t> pair = (*it);
+//
+//            for (uint32_t j = i + 1; j < heightPartitions.size(); ++j) {
+//                auto it = heightPartitions[j].find(pair.first);
+//                if (it != heightPartitions[j].end()) {
+//                    {
+//                        uint32_t newHeight = 2 * pair.first;
+//
+//                        std::map<uint32_t, uint32_t> heightPartitionCopyI = heightPartitions[i];
+//                        if (heightPartitionCopyI[pair.first] == 1) heightPartitionCopyI.erase(pair.first);
+//                        else --heightPartitionCopyI[pair.first];
+//
+//                        std::map<uint32_t, uint32_t> heightPartitionCopyJ = heightPartitions[j];
+//                        if (heightPartitionCopyJ[pair.first] == 1)heightPartitionCopyJ.erase(pair.first);
+//                        else --heightPartitionCopyJ[pair.first];
+//
+//                        ++heightPartitionCopyI[newHeight];
+//
+//                        std::vector<uint32_t> partitionIdsToAdd;
+//                        if (heightPartitionCopyI.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyI));
+//                        if (heightPartitionCopyJ.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyJ));
+//                        result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i], heightPartitionIds[j] }, partitionIdsToAdd));
+//                    }
+//                    {
+//                        uint32_t newHeight = 2 * pair.first;
+//
+//                        std::map<uint32_t, uint32_t> heightPartitionCopyI = heightPartitions[i];
+//                        if (heightPartitionCopyI[pair.first] == 1) heightPartitionCopyI.erase(pair.first);
+//                        else --heightPartitionCopyI[pair.first];
+//
+//                        std::map<uint32_t, uint32_t> heightPartitionCopyJ = heightPartitions[j];
+//                        if (heightPartitionCopyJ[pair.first] == 1)heightPartitionCopyJ.erase(pair.first);
+//                        else --heightPartitionCopyJ[pair.first];
+//
+//
+//                        // diff on this line from above, symmetry for which height is on top
+//                        ++heightPartitionCopyJ[newHeight];
+//
+//                        std::vector<uint32_t> partitionIdsToAdd;
+//                        if (heightPartitionCopyI.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyI));
+//                        if (heightPartitionCopyJ.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(heightPartitionCopyJ));
+//                        result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i], heightPartitionIds[j] }, partitionIdsToAdd));
+//                    }
+//                }
+//            }
+//
+//    }
     return result;
 }
 
@@ -396,10 +471,9 @@ BranchResult SolunaAlgorithm
     return result;
 }
 
-void getAllSymmertricBoardSpaces()
-{
-    std::unordered_map<std::map<uint32_t, uint32_t>, uint32_t, PartitionHash> partitionToIdMap;
-    std::unordered_map<uint32_t, std::map<uint32_t, uint32_t>> idToPartitionMap;
+void getAllSymmertricBoardSpaces() {
+    std::unordered_map<std::vector<PartitionNumber>, uint32_t, PartitionHash> partitionToIdMap;
+    std::unordered_map<uint32_t, std::vector<PartitionNumber>> idToPartitionMap;
     // essentially just the sum of ids
     std::vector<uint32_t> idPieceCounts;
     std::vector<uint32_t> ids;
@@ -422,7 +496,7 @@ void getAllSymmertricBoardSpaces()
 
 int main()
 {
-    const uint32_t epoc = 200;
+    const uint32_t epoc = 10;
     auto start = std::chrono::system_clock::now();
     for (uint32_t i = 0; i < epoc; ++i)
         getAllSymmertricBoardSpaces();
