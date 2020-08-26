@@ -476,6 +476,11 @@ bool calculateAllGameStates(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
     std::cout << millis << std::endl;
     return true;
 }
+
+uint32_t * getGameState(uint32_t index) {
+    return state.allGameStates[index].data();
+}
+
 #ifdef __cplusplus
 }
 #endif

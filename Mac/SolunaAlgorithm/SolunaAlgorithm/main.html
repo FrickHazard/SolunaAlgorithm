@@ -8,9 +8,14 @@
   <body>
         <script>
             function myInit() { 
-                Module.onRuntimeInitialized = function() {                
-                    var calculateAllGameStates = Module.cwrap('calculateAllGameStates', 'bool', ['number', 'number']);
-                    console.log(calculateAllGameStates(4, 12));
+                Module.onRuntimeInitialized = function() {               
+                    console.log(Module); 
+                    // var calculateAllGameStates = Module.cwrap('calculateAllGameStates', 'bool', ['number', 'number']);
+                    var calculateAllGameStates = Module._calculateAllGameStates();
+                    Module._calculateAllGameStates(4, 12);
+                    var ptr = Module._getGameState(0);
+                    var my_uint8_buffer = new Uint32Array(Module.HEAPU32.buffer, ptr, 4);
+                    console.log(my_uint8_buffer);       
                 }
             }
         </script>
