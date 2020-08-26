@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <chrono>
 
-
 // copy of boosts hash_combine
 template <class T>
 inline void hash_combine(std::size_t& s, const T& v) {
@@ -29,8 +28,6 @@ struct BranchResult {
     uint32_t leafVictory;
     bool guaranteedWin;
 } typedef BranchResult;
-
-
 struct GameStateHash {
     size_t operator()(const std::vector<uint32_t>& gameState) const {
         size_t hsh = std::hash<uint32_t>{}((uint32_t)gameState.size());
@@ -53,6 +50,7 @@ struct PartitionHash {
         return hsh;
     }
 };
+
 bool operator == (const std::vector<PartitionNumber>& partition1, const std::vector<PartitionNumber>& partition2) {
     if (partition1.size() != partition2.size()) return false;
     for (uint32_t i = 0;  i < partition1.size(); ++i) {
@@ -61,7 +59,13 @@ bool operator == (const std::vector<PartitionNumber>& partition1, const std::vec
     return true;
 }
 
-std::string enumNames[] = {"Sun", "Moon", "Shooting Star", "Stars" };
+struct ModuleState {
+    uint32_t COLOR_COUNT;
+    uint32_t PIECE_COUNT;
+    std::vector<std::vector<uint32_t>> allGameStates;
+    std::unordered_map<std::vector<uint32_t>, std::vector<std::vector<uint32_t>>, GameStateHash> moveMap;
+    std::unordered_map<std::vector<uint32_t>, BranchResult, GameStateHash> branchResultMap;
+} state;
 
 // recursive function, rewrite into iterative, this is the biggest choke point, exponential growth in color count
 // essentialy constrained orderless combinations
@@ -427,6 +431,9 @@ BranchResult SolunaAlgorithm
 }
 
 void getAllSymmertricBoardSpaces(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
+    
+    state = {0};
+    
     std::unordered_map<std::vector<PartitionNumber>, uint32_t, PartitionHash> partitionToIdMap;
     std::unordered_map<uint32_t, std::vector<PartitionNumber>> idToPartitionMap;
     // essentially just the sum of ids
@@ -447,19 +454,32 @@ void getAllSymmertricBoardSpaces(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
     for (uint32_t i = 0; i < allGameStates.size(); ++i) {
         SolunaAlgorithm(allGameStates[i], moveMap, branchResultMap);
     }
+    
+    // TODO fix this copying here!
+    state.COLOR_COUNT = COLOR_COUNT;
+    state.PIECE_COUNT = PIECE_COUNT;
+    state.allGameStates = allGameStates;
+    state.branchResultMap = branchResultMap;
+    state.moveMap = moveMap;
 }
 
-int main()
-{
-    
-    const uint32_t epoc = 1;
-    for (uint32_t i = 0; i < epoc; ++i) {
-        auto start = std::chrono::system_clock::now();
-        getAllSymmertricBoardSpaces(4u + i, 12u + i);
-        auto end = std::chrono::system_clock::now();
-        auto duration = (end - start);
-        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-        std::cout << millis << std::endl;
-    }
-    return 0;
+// API of webassembly
+#ifdef __cplusplus
+extern "C" {
+#endif
+bool calculateAllGameStates(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
+    auto start = std::chrono::system_clock::now();
+    getAllSymmertricBoardSpaces(COLOR_COUNT, PIECE_COUNT);
+    auto end = std::chrono::system_clock::now();
+    auto duration = (end - start);
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+    std::cout << millis << std::endl;
+    return true;
 }
+#ifdef __cplusplus
+}
+#endif
+
+//int main() {
+//    return 0;
+//}
