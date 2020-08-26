@@ -447,13 +447,12 @@ void getAllSymmertricBoardSpaces(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
     for (uint32_t i = 0; i < allGameStates.size(); ++i) {
         SolunaAlgorithm(allGameStates[i], moveMap, branchResultMap);
     }
-    std::cout << "";
 }
 
 int main()
 {
-    const uint32_t epoc = 100;
-   
+    
+    const uint32_t epoc = 1;
     for (uint32_t i = 0; i < epoc; ++i) {
         auto start = std::chrono::system_clock::now();
         getAllSymmertricBoardSpaces(4u + i, 12u + i);
