@@ -278,6 +278,66 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ 
 
 /***/ }),
 
+/***/ "./src/assets/Concrete_Column_001_SD/Concrete_Column_001_ambientOcclusion.jpg":
+/*!************************************************************************************!*\
+  !*** ./src/assets/Concrete_Column_001_SD/Concrete_Column_001_ambientOcclusion.jpg ***!
+  \************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"33d8ba7a6a0f13ff813fac72c67b0d71.jpg\");\n\n//# sourceURL=webpack:///./src/assets/Concrete_Column_001_SD/Concrete_Column_001_ambientOcclusion.jpg?");
+
+/***/ }),
+
+/***/ "./src/assets/Concrete_Column_001_SD/Concrete_Column_001_basecolor.jpg":
+/*!*****************************************************************************!*\
+  !*** ./src/assets/Concrete_Column_001_SD/Concrete_Column_001_basecolor.jpg ***!
+  \*****************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"a44f7652848e5bd95f8dcea03a16f782.jpg\");\n\n//# sourceURL=webpack:///./src/assets/Concrete_Column_001_SD/Concrete_Column_001_basecolor.jpg?");
+
+/***/ }),
+
+/***/ "./src/assets/Concrete_Column_001_SD/Concrete_Column_001_height.png":
+/*!**************************************************************************!*\
+  !*** ./src/assets/Concrete_Column_001_SD/Concrete_Column_001_height.png ***!
+  \**************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"5ce60e1f6418bcab32a08f2e915e4c6d.png\");\n\n//# sourceURL=webpack:///./src/assets/Concrete_Column_001_SD/Concrete_Column_001_height.png?");
+
+/***/ }),
+
+/***/ "./src/assets/Concrete_Column_001_SD/Concrete_Column_001_normal.jpg":
+/*!**************************************************************************!*\
+  !*** ./src/assets/Concrete_Column_001_SD/Concrete_Column_001_normal.jpg ***!
+  \**************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"944f8f92cb4f2948ef8bfc007fa800d8.jpg\");\n\n//# sourceURL=webpack:///./src/assets/Concrete_Column_001_SD/Concrete_Column_001_normal.jpg?");
+
+/***/ }),
+
+/***/ "./src/assets/Concrete_Column_001_SD/Concrete_Column_001_roughness.jpg":
+/*!*****************************************************************************!*\
+  !*** ./src/assets/Concrete_Column_001_SD/Concrete_Column_001_roughness.jpg ***!
+  \*****************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"b73f1e817c0d31abc598692e245d6066.jpg\");\n\n//# sourceURL=webpack:///./src/assets/Concrete_Column_001_SD/Concrete_Column_001_roughness.jpg?");
+
+/***/ }),
+
 /***/ "./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_ambientOcclusion.jpg":
 /*!******************************************************************************************!*\
   !*** ./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_ambientOcclusion.jpg ***!
@@ -350,75 +410,75 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ 
 
 /***/ }),
 
-/***/ "./src/assets/yellowcloud_bk.jpg":
-/*!***************************************!*\
-  !*** ./src/assets/yellowcloud_bk.jpg ***!
-  \***************************************/
+/***/ "./src/assets/skybox/graycloud_bk.jpg":
+/*!********************************************!*\
+  !*** ./src/assets/skybox/graycloud_bk.jpg ***!
+  \********************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"58857e26575888f64ed71919c64609d3.jpg\");\n\n//# sourceURL=webpack:///./src/assets/yellowcloud_bk.jpg?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"7e969eae7ebd19a439eefb58f86a74e8.jpg\");\n\n//# sourceURL=webpack:///./src/assets/skybox/graycloud_bk.jpg?");
 
 /***/ }),
 
-/***/ "./src/assets/yellowcloud_dn.jpg":
-/*!***************************************!*\
-  !*** ./src/assets/yellowcloud_dn.jpg ***!
-  \***************************************/
+/***/ "./src/assets/skybox/graycloud_dn.jpg":
+/*!********************************************!*\
+  !*** ./src/assets/skybox/graycloud_dn.jpg ***!
+  \********************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"d77f811f1d691bd849687aad6ef7bdcb.jpg\");\n\n//# sourceURL=webpack:///./src/assets/yellowcloud_dn.jpg?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"5987a019405fa5032019ad280fb70271.jpg\");\n\n//# sourceURL=webpack:///./src/assets/skybox/graycloud_dn.jpg?");
 
 /***/ }),
 
-/***/ "./src/assets/yellowcloud_ft.jpg":
-/*!***************************************!*\
-  !*** ./src/assets/yellowcloud_ft.jpg ***!
-  \***************************************/
+/***/ "./src/assets/skybox/graycloud_ft.jpg":
+/*!********************************************!*\
+  !*** ./src/assets/skybox/graycloud_ft.jpg ***!
+  \********************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"9d203a0b9f32209e17660b246fa51df1.jpg\");\n\n//# sourceURL=webpack:///./src/assets/yellowcloud_ft.jpg?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"d15b8bb214a983e0f26f23f2d46d2c2c.jpg\");\n\n//# sourceURL=webpack:///./src/assets/skybox/graycloud_ft.jpg?");
 
 /***/ }),
 
-/***/ "./src/assets/yellowcloud_lf.jpg":
-/*!***************************************!*\
-  !*** ./src/assets/yellowcloud_lf.jpg ***!
-  \***************************************/
+/***/ "./src/assets/skybox/graycloud_lf.jpg":
+/*!********************************************!*\
+  !*** ./src/assets/skybox/graycloud_lf.jpg ***!
+  \********************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"b721513ef5aca2b460c5edfafaf814fe.jpg\");\n\n//# sourceURL=webpack:///./src/assets/yellowcloud_lf.jpg?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"3a3ced0a8d2db17864b68c8154c9eccd.jpg\");\n\n//# sourceURL=webpack:///./src/assets/skybox/graycloud_lf.jpg?");
 
 /***/ }),
 
-/***/ "./src/assets/yellowcloud_rt.jpg":
-/*!***************************************!*\
-  !*** ./src/assets/yellowcloud_rt.jpg ***!
-  \***************************************/
+/***/ "./src/assets/skybox/graycloud_rt.jpg":
+/*!********************************************!*\
+  !*** ./src/assets/skybox/graycloud_rt.jpg ***!
+  \********************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"e3dab7d6cd03dbd65670b94614687949.jpg\");\n\n//# sourceURL=webpack:///./src/assets/yellowcloud_rt.jpg?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"ab1f44dcbe8760f55fe05027db23b43f.jpg\");\n\n//# sourceURL=webpack:///./src/assets/skybox/graycloud_rt.jpg?");
 
 /***/ }),
 
-/***/ "./src/assets/yellowcloud_up.jpg":
-/*!***************************************!*\
-  !*** ./src/assets/yellowcloud_up.jpg ***!
-  \***************************************/
+/***/ "./src/assets/skybox/graycloud_up.jpg":
+/*!********************************************!*\
+  !*** ./src/assets/skybox/graycloud_up.jpg ***!
+  \********************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"837798bf40f6f57ff588315ebbdcf211.jpg\");\n\n//# sourceURL=webpack:///./src/assets/yellowcloud_up.jpg?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ __webpack_exports__[\"default\"] = (__webpack_require__.p + \"62a2479861f8e76e973017da06152195.jpg\");\n\n//# sourceURL=webpack:///./src/assets/skybox/graycloud_up.jpg?");
 
 /***/ }),
 
@@ -430,7 +490,7 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony default export */ 
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"initThree\", function() { return initThree; });\n/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ \"./node_modules/three/build/three.module.js\");\n/* harmony import */ var three_examples_jsm_controls_OrbitControls__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/controls/OrbitControls */ \"./node_modules/three/examples/jsm/controls/OrbitControls.js\");\n/* harmony import */ var _assets_yellowcloud_ft_jpg__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./assets/yellowcloud_ft.jpg */ \"./src/assets/yellowcloud_ft.jpg\");\n/* harmony import */ var _assets_yellowcloud_bk_jpg__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./assets/yellowcloud_bk.jpg */ \"./src/assets/yellowcloud_bk.jpg\");\n/* harmony import */ var _assets_yellowcloud_up_jpg__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./assets/yellowcloud_up.jpg */ \"./src/assets/yellowcloud_up.jpg\");\n/* harmony import */ var _assets_yellowcloud_dn_jpg__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./assets/yellowcloud_dn.jpg */ \"./src/assets/yellowcloud_dn.jpg\");\n/* harmony import */ var _assets_yellowcloud_rt_jpg__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./assets/yellowcloud_rt.jpg */ \"./src/assets/yellowcloud_rt.jpg\");\n/* harmony import */ var _assets_yellowcloud_lf_jpg__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./assets/yellowcloud_lf.jpg */ \"./src/assets/yellowcloud_lf.jpg\");\n/* harmony import */ var _assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_basecolor_jpg__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_basecolor.jpg */ \"./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_basecolor.jpg\");\n/* harmony import */ var _assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_normal_jpg__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_normal.jpg */ \"./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_normal.jpg\");\n/* harmony import */ var _assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_roughness_jpg__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_roughness.jpg */ \"./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_roughness.jpg\");\n/* harmony import */ var _assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_ambientOcclusion_jpg__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_ambientOcclusion.jpg */ \"./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_ambientOcclusion.jpg\");\n/* harmony import */ var _assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_height_png__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_height.png */ \"./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_height.png\");\n/* harmony import */ var _assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_opacity_jpg__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_opacity.jpg */ \"./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_opacity.jpg\");\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nvar initThree = function initThree(domElement) {\n  var rect = domElement.getBoundingClientRect();\n  var width = rect.width;\n  var height = rect.height;\n  var scene = new three__WEBPACK_IMPORTED_MODULE_0__[\"Scene\"]();\n  var camera = new three__WEBPACK_IMPORTED_MODULE_0__[\"PerspectiveCamera\"](75, width / innerHeight, 0.1, 30000);\n  var renderer = new three__WEBPACK_IMPORTED_MODULE_0__[\"WebGLRenderer\"]();\n  renderer.setSize(window.innerWidth, window.innerHeight);\n  domElement.appendChild(renderer.domElement);\n  var controls = new three_examples_jsm_controls_OrbitControls__WEBPACK_IMPORTED_MODULE_1__[\"OrbitControls\"](camera, renderer.domElement); // 26 = radius of piller + 1\n\n  controls.minDistance = 26;\n  controls.maxDistance = 100;\n  controls.maxPolarAngle = Math.PI / 2 - 0.1;\n  camera.position.z = 26;\n  controls.update(); // cube\n\n  var geometry = new three__WEBPACK_IMPORTED_MODULE_0__[\"BoxGeometry\"]();\n  var material = new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]({\n    color: 0x00ff00\n  });\n  var cube = new three__WEBPACK_IMPORTED_MODULE_0__[\"Mesh\"](geometry, material);\n  scene.add(cube);\n  var textureLoader = new three__WEBPACK_IMPORTED_MODULE_0__[\"TextureLoader\"](); // pillar\n\n  {\n    var rep = 2;\n    var diffuse = textureLoader.load(_assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_basecolor_jpg__WEBPACK_IMPORTED_MODULE_8__[\"default\"]);\n    diffuse.repeat.set(rep, rep);\n    diffuse.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    diffuse.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    diffuse.anisotropy = 8;\n    var normal = textureLoader.load(_assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_normal_jpg__WEBPACK_IMPORTED_MODULE_9__[\"default\"]);\n    normal.repeat.set(rep, rep);\n    normal.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    normal.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    normal.anisotropy = 8;\n    var ambientOcclusion = textureLoader.load(_assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_ambientOcclusion_jpg__WEBPACK_IMPORTED_MODULE_11__[\"default\"]);\n    ambientOcclusion.repeat.set(rep, rep);\n    ambientOcclusion.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    ambientOcclusion.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    ambientOcclusion.anisotropy = 8;\n    var heightMap = textureLoader.load(_assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_height_png__WEBPACK_IMPORTED_MODULE_12__[\"default\"]);\n    heightMap.repeat.set(rep, rep);\n    heightMap.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    heightMap.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    heightMap.anisotropy = 8;\n    var opacityMap = textureLoader.load(_assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_opacity_jpg__WEBPACK_IMPORTED_MODULE_13__[\"default\"]);\n    opacityMap.repeat.set(rep, rep);\n    opacityMap.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    opacityMap.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    opacityMap.anisotropy = 8;\n    var roughnessMap = textureLoader.load(_assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_roughness_jpg__WEBPACK_IMPORTED_MODULE_10__[\"default\"]);\n    roughnessMap.repeat.set(rep, rep);\n    roughnessMap.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    roughnessMap.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    roughnessMap.anisotropy = 8;\n    var sideMat = new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshStandardMaterial\"]({\n      color: 0x3245bb,\n      roughness: 1,\n      metalness: 0.3,\n      emissive: 0x222222\n    });\n    var matArray = [sideMat, new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshStandardMaterial\"]({\n      emissive: 0x222233,\n      map: diffuse,\n      normalMap: normal,\n      aoMap: ambientOcclusion,\n      roughnessMap: roughnessMap,\n      alphaMap: opacityMap,\n      displacementMap: heightMap,\n      displacementScale: 0 // displacementBias: 0.6\n\n    }), sideMat];\n    var pillarHeight = 1600;\n    var boardGeometry = new three__WEBPACK_IMPORTED_MODULE_0__[\"CylinderGeometry\"](25, 25, pillarHeight, 128, 128, false);\n    var boardMesh = new three__WEBPACK_IMPORTED_MODULE_0__[\"Mesh\"](boardGeometry, matArray);\n    boardMesh.translateY(-pillarHeight / 2);\n    scene.add(boardMesh);\n  } // light\n\n  {\n    var directionalLight = new three__WEBPACK_IMPORTED_MODULE_0__[\"DirectionalLight\"](0xffffff, 1.);\n    directionalLight.rotateX(0.1);\n    directionalLight.rotateZ(0.5);\n    scene.add(directionalLight);\n  } // fog\n\n  {\n    scene.fog = new three__WEBPACK_IMPORTED_MODULE_0__[\"Fog\"](0x000000, 1, 800);\n  } // skybox\n\n  {\n    var front = textureLoader.load(_assets_yellowcloud_ft_jpg__WEBPACK_IMPORTED_MODULE_2__[\"default\"]);\n    var back = textureLoader.load(_assets_yellowcloud_bk_jpg__WEBPACK_IMPORTED_MODULE_3__[\"default\"]);\n    var up = textureLoader.load(_assets_yellowcloud_up_jpg__WEBPACK_IMPORTED_MODULE_4__[\"default\"]);\n    var down = textureLoader.load(_assets_yellowcloud_dn_jpg__WEBPACK_IMPORTED_MODULE_5__[\"default\"]);\n    var right = textureLoader.load(_assets_yellowcloud_rt_jpg__WEBPACK_IMPORTED_MODULE_6__[\"default\"]);\n    var left = textureLoader.load(_assets_yellowcloud_lf_jpg__WEBPACK_IMPORTED_MODULE_7__[\"default\"]);\n    var _matArray = [new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]({\n      map: front,\n      side: three__WEBPACK_IMPORTED_MODULE_0__[\"BackSide\"],\n      fog: false\n    }), new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]({\n      map: back,\n      side: three__WEBPACK_IMPORTED_MODULE_0__[\"BackSide\"],\n      fog: false\n    }), new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]({\n      map: up,\n      side: three__WEBPACK_IMPORTED_MODULE_0__[\"BackSide\"],\n      fog: false\n    }), new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]({\n      map: down,\n      side: three__WEBPACK_IMPORTED_MODULE_0__[\"BackSide\"],\n      fog: false\n    }), new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]({\n      map: right,\n      side: three__WEBPACK_IMPORTED_MODULE_0__[\"BackSide\"],\n      fog: false\n    }), new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]({\n      map: left,\n      side: three__WEBPACK_IMPORTED_MODULE_0__[\"BackSide\"],\n      fog: false\n    })];\n    var skyboxGeo = new three__WEBPACK_IMPORTED_MODULE_0__[\"BoxGeometry\"](10000, 10000, 10000);\n    var skybox = new three__WEBPACK_IMPORTED_MODULE_0__[\"Mesh\"](skyboxGeo, _matArray);\n    scene.add(skybox);\n  } // animate\n\n  var animate = function animate() {\n    requestAnimationFrame(animate);\n    cube.rotation.x += 0.01;\n    cube.rotation.y += 0.01;\n    controls.update();\n    renderer.render(scene, camera);\n  };\n\n  animate();\n};\n\n//# sourceURL=webpack:///./src/initThree.js?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"initThree\", function() { return initThree; });\n/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ \"./node_modules/three/build/three.module.js\");\n/* harmony import */ var three_examples_jsm_controls_OrbitControls__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/controls/OrbitControls */ \"./node_modules/three/examples/jsm/controls/OrbitControls.js\");\n/* harmony import */ var _assets_skybox_graycloud_ft_jpg__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./assets/skybox/graycloud_ft.jpg */ \"./src/assets/skybox/graycloud_ft.jpg\");\n/* harmony import */ var _assets_skybox_graycloud_bk_jpg__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./assets/skybox/graycloud_bk.jpg */ \"./src/assets/skybox/graycloud_bk.jpg\");\n/* harmony import */ var _assets_skybox_graycloud_up_jpg__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./assets/skybox/graycloud_up.jpg */ \"./src/assets/skybox/graycloud_up.jpg\");\n/* harmony import */ var _assets_skybox_graycloud_dn_jpg__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./assets/skybox/graycloud_dn.jpg */ \"./src/assets/skybox/graycloud_dn.jpg\");\n/* harmony import */ var _assets_skybox_graycloud_rt_jpg__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./assets/skybox/graycloud_rt.jpg */ \"./src/assets/skybox/graycloud_rt.jpg\");\n/* harmony import */ var _assets_skybox_graycloud_lf_jpg__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./assets/skybox/graycloud_lf.jpg */ \"./src/assets/skybox/graycloud_lf.jpg\");\n/* harmony import */ var _assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_basecolor_jpg__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_basecolor.jpg */ \"./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_basecolor.jpg\");\n/* harmony import */ var _assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_normal_jpg__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_normal.jpg */ \"./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_normal.jpg\");\n/* harmony import */ var _assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_roughness_jpg__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_roughness.jpg */ \"./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_roughness.jpg\");\n/* harmony import */ var _assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_ambientOcclusion_jpg__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_ambientOcclusion.jpg */ \"./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_ambientOcclusion.jpg\");\n/* harmony import */ var _assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_height_png__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_height.png */ \"./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_height.png\");\n/* harmony import */ var _assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_opacity_jpg__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_opacity.jpg */ \"./src/assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_opacity.jpg\");\n/* harmony import */ var _assets_Concrete_Column_001_SD_Concrete_Column_001_basecolor_jpg__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./assets/Concrete_Column_001_SD/Concrete_Column_001_basecolor.jpg */ \"./src/assets/Concrete_Column_001_SD/Concrete_Column_001_basecolor.jpg\");\n/* harmony import */ var _assets_Concrete_Column_001_SD_Concrete_Column_001_normal_jpg__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./assets/Concrete_Column_001_SD/Concrete_Column_001_normal.jpg */ \"./src/assets/Concrete_Column_001_SD/Concrete_Column_001_normal.jpg\");\n/* harmony import */ var _assets_Concrete_Column_001_SD_Concrete_Column_001_roughness_jpg__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./assets/Concrete_Column_001_SD/Concrete_Column_001_roughness.jpg */ \"./src/assets/Concrete_Column_001_SD/Concrete_Column_001_roughness.jpg\");\n/* harmony import */ var _assets_Concrete_Column_001_SD_Concrete_Column_001_ambientOcclusion_jpg__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./assets/Concrete_Column_001_SD/Concrete_Column_001_ambientOcclusion.jpg */ \"./src/assets/Concrete_Column_001_SD/Concrete_Column_001_ambientOcclusion.jpg\");\n/* harmony import */ var _assets_Concrete_Column_001_SD_Concrete_Column_001_height_png__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./assets/Concrete_Column_001_SD/Concrete_Column_001_height.png */ \"./src/assets/Concrete_Column_001_SD/Concrete_Column_001_height.png\");\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nvar initThree = function initThree(domElement) {\n  var rect = domElement.getBoundingClientRect();\n  var width = rect.width;\n  var height = rect.height;\n  var scene = new three__WEBPACK_IMPORTED_MODULE_0__[\"Scene\"]();\n  var camera = new three__WEBPACK_IMPORTED_MODULE_0__[\"PerspectiveCamera\"](75, width / window.innerHeight, 0.1, 30000);\n  var renderer = new three__WEBPACK_IMPORTED_MODULE_0__[\"WebGLRenderer\"]();\n  renderer.setSize(window.innerWidth, window.innerHeight);\n  domElement.appendChild(renderer.domElement);\n  var controls = new three_examples_jsm_controls_OrbitControls__WEBPACK_IMPORTED_MODULE_1__[\"OrbitControls\"](camera, renderer.domElement); // 26 = radius of piller + 1\n\n  controls.minDistance = 26;\n  controls.maxDistance = 100;\n  controls.maxPolarAngle = Math.PI / 2 - 0.1;\n  camera.position.z = 26;\n  controls.update();\n  var textureLoader = new three__WEBPACK_IMPORTED_MODULE_0__[\"TextureLoader\"](); // pillar\n\n  {\n    var rep = 2;\n    var diffuse = textureLoader.load(_assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_basecolor_jpg__WEBPACK_IMPORTED_MODULE_8__[\"default\"]);\n    diffuse.repeat.set(rep, rep);\n    diffuse.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    diffuse.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    diffuse.anisotropy = 8;\n    var normal = textureLoader.load(_assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_normal_jpg__WEBPACK_IMPORTED_MODULE_9__[\"default\"]);\n    normal.repeat.set(rep, rep);\n    normal.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    normal.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    normal.anisotropy = 8;\n    var ambientOcclusion = textureLoader.load(_assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_ambientOcclusion_jpg__WEBPACK_IMPORTED_MODULE_11__[\"default\"]);\n    ambientOcclusion.repeat.set(rep, rep);\n    ambientOcclusion.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    ambientOcclusion.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    ambientOcclusion.anisotropy = 8;\n    var heightMap = textureLoader.load(_assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_height_png__WEBPACK_IMPORTED_MODULE_12__[\"default\"]);\n    heightMap.repeat.set(rep, rep);\n    heightMap.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    heightMap.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    heightMap.anisotropy = 8;\n    var opacityMap = textureLoader.load(_assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_opacity_jpg__WEBPACK_IMPORTED_MODULE_13__[\"default\"]);\n    opacityMap.repeat.set(rep, rep);\n    opacityMap.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    opacityMap.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    opacityMap.anisotropy = 8;\n    var roughnessMap = textureLoader.load(_assets_Fabric_Nylon_weave_001_SD_Fabric_Nylon_weave_001_roughness_jpg__WEBPACK_IMPORTED_MODULE_10__[\"default\"]);\n    roughnessMap.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    roughnessMap.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    roughnessMap.anisotropy = 8;\n    var sideRepS = 40;\n    var sideRepT = 40;\n    var diffuseSide = textureLoader.load(_assets_Concrete_Column_001_SD_Concrete_Column_001_basecolor_jpg__WEBPACK_IMPORTED_MODULE_14__[\"default\"]);\n    diffuseSide.repeat.set(sideRepS, sideRepT);\n    diffuseSide.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    diffuseSide.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    diffuseSide.anisotropy = 8;\n    var normalSide = textureLoader.load(_assets_Concrete_Column_001_SD_Concrete_Column_001_normal_jpg__WEBPACK_IMPORTED_MODULE_15__[\"default\"]);\n    normalSide.repeat.set(sideRepS, sideRepT);\n    normalSide.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    normalSide.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    normalSide.anisotropy = 8;\n    var ambientOcclusionSide = textureLoader.load(_assets_Concrete_Column_001_SD_Concrete_Column_001_ambientOcclusion_jpg__WEBPACK_IMPORTED_MODULE_17__[\"default\"]);\n    ambientOcclusionSide.repeat.set(sideRepS, sideRepT);\n    ambientOcclusionSide.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    ambientOcclusionSide.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    ambientOcclusionSide.anisotropy = 8;\n    var roughnessMapSide = textureLoader.load(_assets_Concrete_Column_001_SD_Concrete_Column_001_roughness_jpg__WEBPACK_IMPORTED_MODULE_16__[\"default\"]);\n    roughnessMapSide.repeat.set(sideRepS, sideRepT);\n    roughnessMapSide.wrapS = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    roughnessMapSide.wrapT = three__WEBPACK_IMPORTED_MODULE_0__[\"RepeatWrapping\"];\n    roughnessMapSide.anisotropy = 8;\n    var sideMaterial = new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshStandardMaterial\"]({\n      // color: 0x000000,\n      //roughness: 0.4,\n      // metalness: 0.3,\n      map: diffuseSide,\n      normalMap: normalSide,\n      aoMap: ambientOcclusionSide,\n      roughnessMap: roughnessMapSide,\n      color: 0x556655 // emissive : 0x222233,  \n      // emissive : 0xffffff, \n\n    });\n    var matArray = [sideMaterial, // top of cylinder           \n    new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshStandardMaterial\"]({\n      emissive: 0x222233,\n      map: diffuse,\n      normalMap: normal,\n      aoMap: ambientOcclusion,\n      roughnessMap: roughnessMap,\n      alphaMap: opacityMap,\n      displacementMap: heightMap,\n      displacementScale: 0,\n      color: 0x2255ff // displacementBias: 0.6\n\n    }), new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]()];\n    var pillarHeight = 1600;\n    var boardGeometry = new three__WEBPACK_IMPORTED_MODULE_0__[\"CylinderGeometry\"](25, 25, pillarHeight, 128, 128, false);\n    var boardMesh = new three__WEBPACK_IMPORTED_MODULE_0__[\"Mesh\"](boardGeometry, matArray);\n    boardMesh.translateY(-pillarHeight / 2);\n    scene.add(boardMesh);\n  } // light\n\n  {\n    var directionalLight = new three__WEBPACK_IMPORTED_MODULE_0__[\"DirectionalLight\"](0xffffff, 1.);\n    directionalLight.rotateY(0.1);\n    directionalLight.rotateZ(0.5);\n    scene.add(directionalLight);\n    var pointLight = new three__WEBPACK_IMPORTED_MODULE_0__[\"PointLight\"](0x102030, 7, 30, 1);\n    pointLight.translateY(10);\n    scene.add(pointLight);\n    var ambientLight = new three__WEBPACK_IMPORTED_MODULE_0__[\"AmbientLight\"](0xFFFFFF, 2);\n    scene.add(ambientLight);\n  } // fog\n\n  {\n    scene.fog = new three__WEBPACK_IMPORTED_MODULE_0__[\"Fog\"](0x000000, 1, 800);\n  } // skybox\n\n  {\n    var front = textureLoader.load(_assets_skybox_graycloud_ft_jpg__WEBPACK_IMPORTED_MODULE_2__[\"default\"]);\n    var back = textureLoader.load(_assets_skybox_graycloud_bk_jpg__WEBPACK_IMPORTED_MODULE_3__[\"default\"]);\n    var up = textureLoader.load(_assets_skybox_graycloud_up_jpg__WEBPACK_IMPORTED_MODULE_4__[\"default\"]);\n    var down = textureLoader.load(_assets_skybox_graycloud_dn_jpg__WEBPACK_IMPORTED_MODULE_5__[\"default\"]);\n    var right = textureLoader.load(_assets_skybox_graycloud_rt_jpg__WEBPACK_IMPORTED_MODULE_6__[\"default\"]);\n    var left = textureLoader.load(_assets_skybox_graycloud_lf_jpg__WEBPACK_IMPORTED_MODULE_7__[\"default\"]);\n    var _matArray = [new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]({\n      map: front,\n      side: three__WEBPACK_IMPORTED_MODULE_0__[\"BackSide\"],\n      fog: false\n    }), new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]({\n      map: back,\n      side: three__WEBPACK_IMPORTED_MODULE_0__[\"BackSide\"],\n      fog: false\n    }), new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]({\n      map: up,\n      side: three__WEBPACK_IMPORTED_MODULE_0__[\"BackSide\"],\n      fog: false\n    }), new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]({\n      map: down,\n      side: three__WEBPACK_IMPORTED_MODULE_0__[\"BackSide\"],\n      fog: false\n    }), new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]({\n      map: right,\n      side: three__WEBPACK_IMPORTED_MODULE_0__[\"BackSide\"],\n      fog: false\n    }), new three__WEBPACK_IMPORTED_MODULE_0__[\"MeshBasicMaterial\"]({\n      map: left,\n      side: three__WEBPACK_IMPORTED_MODULE_0__[\"BackSide\"],\n      fog: false\n    })];\n    var skyboxGeo = new three__WEBPACK_IMPORTED_MODULE_0__[\"BoxGeometry\"](10000, 10000, 10000);\n    var skybox = new three__WEBPACK_IMPORTED_MODULE_0__[\"Mesh\"](skyboxGeo, _matArray);\n    scene.add(skybox);\n  } // animate\n\n  var animate = function animate() {\n    requestAnimationFrame(animate);\n    controls.update();\n    renderer.render(scene, camera);\n  };\n\n  animate();\n};\n\n//# sourceURL=webpack:///./src/initThree.js?");
 
 /***/ })
 
