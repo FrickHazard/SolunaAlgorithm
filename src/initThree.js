@@ -13,7 +13,8 @@ import {
     CylinderGeometry,
     RepeatWrapping,
     PointLight,
-    AmbientLight
+    AmbientLight,
+    Vector2
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
@@ -31,11 +32,11 @@ import pillarTopAmbientOcclusion from './assets/Fabric_Nylon_weave_001_SD/Fabric
 import pillarTopHeightTexture from './assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_height.png';
 import pillarTopOpacity from './assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_opacity.jpg';
 
-import pillarSideDiffuse from './assets/Concrete_Column_001_SD/Concrete_Column_001_basecolor.jpg';
-import pillarSideNormal from './assets/Concrete_Column_001_SD/Concrete_Column_001_normal.jpg';
-import pillarSideRoughness from './assets/Concrete_Column_001_SD/Concrete_Column_001_roughness.jpg';
-import pillarSideAmbientOcclusion from './assets/Concrete_Column_001_SD/Concrete_Column_001_ambientOcclusion.jpg';
-import pillarSideHeightTexture from './assets/Concrete_Column_001_SD/Concrete_Column_001_height.png';
+import pillarSideDiffuse from './assets/Tiles_034_SD/Tiles_034_basecolor.jpg';
+import pillarSideNormal from './assets/Tiles_034_SD/Tiles_034_normal.jpg';
+import pillarSideRoughness from './assets/Tiles_034_SD/Tiles_034_roughness.jpg';
+import pillarSideAmbientOcclusion from './assets/Tiles_034_SD/Tiles_034_ambientOcclusion.jpg';
+import pillarSideHeightTexture from './assets/Tiles_034_SD/Tiles_034_height.png';
 
 export const initThree = (domElement) => {
     const rect = domElement.getBoundingClientRect();
@@ -93,8 +94,8 @@ export const initThree = (domElement) => {
         roughnessMap.anisotropy = 8; 
         
 
-        const sideRepS = 40;
-        const sideRepT = 40;
+        const sideRepS = 16;
+        const sideRepT = 160;
         const diffuseSide = textureLoader.load(pillarSideDiffuse);
         diffuseSide.repeat.set(sideRepS,sideRepT);
         diffuseSide.wrapS = RepeatWrapping;
@@ -118,16 +119,17 @@ export const initThree = (domElement) => {
 
 
         const sideMaterial = new MeshStandardMaterial({ 
-            // color: 0x000000,
-            //roughness: 0.4,
-            // metalness: 0.3,
+            color: 0xdddddd,
+            roughness: 1,
+            // metalness: 1,
             map: diffuseSide,
             normalMap: normalSide,
-            aoMap: ambientOcclusionSide,
-            roughnessMap: roughnessMapSide,        
-            color: 0x556655,
+            bumpMap: ambientOcclusionSide,
+            roughnessMap: roughnessMapSide,
+            normalScale : new Vector2(2, 2)      
+            // color: 0x556655,
             // emissive : 0x222233,  
-            // emissive : 0xffffff, 
+            // emissive : 0x224433, 
         });
         const matArray = [
             sideMaterial, 
@@ -136,7 +138,7 @@ export const initThree = (domElement) => {
                 emissive : 0x222233,         
                 map: diffuse,
                 normalMap: normal,
-                aoMap: ambientOcclusion,
+                bumpMap: ambientOcclusion,
                 roughnessMap,
                 alphaMap: opacityMap,
                 displacementMap: heightMap,
