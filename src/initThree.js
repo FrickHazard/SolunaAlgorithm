@@ -5,21 +5,29 @@ import {
     BoxGeometry,
     MeshBasicMaterial,
     Mesh,
-    PlaneGeometry,
     MeshStandardMaterial,
     DirectionalLight,
     BackSide,
-    TextureLoader
+    TextureLoader,
+    Fog,
+    CylinderGeometry,
+    RepeatWrapping
 } from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-import yellowCloudForward from './assets/yellowcloud_ft.jpg'
-import yellowCloudBack from './assets/yellowcloud_bk.jpg'
-import yellowCloudUp from './assets/yellowcloud_up.jpg'
-import yellowCloudDown from './assets/yellowcloud_dn.jpg'
-import yellowCloudRight from './assets/yellowcloud_rt.jpg'
-import yellowCloudLeft from './assets/yellowcloud_lf.jpg'
+import yellowCloudForward from './assets/yellowcloud_ft.jpg';
+import yellowCloudBack from './assets/yellowcloud_bk.jpg';
+import yellowCloudUp from './assets/yellowcloud_up.jpg';
+import yellowCloudDown from './assets/yellowcloud_dn.jpg';
+import yellowCloudRight from './assets/yellowcloud_rt.jpg';
+import yellowCloudLeft from './assets/yellowcloud_lf.jpg';
 
+import pillarDiffuse from './assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_basecolor.jpg';
+import pillarNormal from './assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_normal.jpg';
+import pillarRoughness from './assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_roughness.jpg';
+import pillarAmbientOcclusion from './assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_ambientOcclusion.jpg';
+import pillarHeightTexture from './assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_height.png';
+import pillarOpacity from './assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_weave_001_opacity.jpg';
 
 
 export const initThree = (domElement) => {
@@ -35,8 +43,13 @@ export const initThree = (domElement) => {
     domElement.appendChild(renderer.domElement);
 
     const controls = new OrbitControls( camera, renderer.domElement );
-    camera.position.z = 5;
+    // 26 = radius of piller + 1
+    controls.minDistance = 26;
+    controls.maxDistance = 100;
+    controls.maxPolarAngle = (Math.PI / 2 - 0.1);
+    camera.position.z = 26;
     controls.update();
+    
 
     // cube
     const geometry = new BoxGeometry();
@@ -44,27 +57,87 @@ export const initThree = (domElement) => {
     const cube = new Mesh( geometry, material );
 
     scene.add( cube );
-    
-    const realMat = new MeshStandardMaterial({ 
-        color: 0x2194ce,
-        roughness: 1,
-        metalness: 0,
-        emissive: 0xd19999
-    })
-    // board
-    const boardGeometry = new PlaneGeometry( 50, 50, 8, 8 );
-    const boardMesh = new Mesh(boardGeometry, realMat);
-    boardMesh.rotateX(-3.14/ 2);
-    scene.add( boardMesh )
+
+    const textureLoader = new TextureLoader();
+       
+    // pillar
+    {
+        const rep = 2;
+        const diffuse = textureLoader.load(pillarDiffuse);
+        diffuse.repeat.set(rep,rep);
+        diffuse.wrapS = RepeatWrapping;
+        diffuse.wrapT = RepeatWrapping;   
+        diffuse.anisotropy = 8; 
+        const normal = textureLoader.load(pillarNormal);
+        normal.repeat.set(rep,rep);
+        normal.wrapS = RepeatWrapping;
+        normal.wrapT = RepeatWrapping;   
+        normal.anisotropy = 8; 
+        const ambientOcclusion = textureLoader.load(pillarAmbientOcclusion);
+        ambientOcclusion.repeat.set(rep,rep);
+        ambientOcclusion.wrapS = RepeatWrapping;
+        ambientOcclusion.wrapT = RepeatWrapping;   
+        ambientOcclusion.anisotropy = 8
+        const heightMap = textureLoader.load(pillarHeightTexture);
+        heightMap.repeat.set(rep,rep);
+        heightMap.wrapS = RepeatWrapping;
+        heightMap.wrapT = RepeatWrapping;   
+        heightMap.anisotropy = 8
+        const opacityMap = textureLoader.load(pillarOpacity);
+        opacityMap.repeat.set(rep,rep);
+        opacityMap.wrapS = RepeatWrapping;
+        opacityMap.wrapT = RepeatWrapping;  
+        opacityMap.anisotropy = 8;   
+        const roughnessMap = textureLoader.load(pillarRoughness);
+        roughnessMap.repeat.set(rep,rep);
+        roughnessMap.wrapS = RepeatWrapping;
+        roughnessMap.wrapT = RepeatWrapping; 
+        roughnessMap.anisotropy = 8;      
+
+        const sideMat = new MeshStandardMaterial({ 
+            color: 0x3245bb,
+            roughness: 1,
+            metalness: 0.3,
+            emissive: 0x222222
+        });
+        const matArray = [
+            sideMat,            
+            new MeshStandardMaterial({    
+                emissive : 0x222233,         
+                map: diffuse,
+                normalMap: normal,
+                aoMap: ambientOcclusion,
+                roughnessMap,
+                alphaMap: opacityMap,
+                displacementMap: heightMap,
+                displacementScale : 0,
+                // displacementBias: 0.6
+            }),
+            sideMat,
+        ];
+        const pillarHeight = 1600;
+        const boardGeometry = new CylinderGeometry( 25, 25, pillarHeight, 128, 128, false);
+        const boardMesh = new Mesh(boardGeometry, matArray);      
+        boardMesh.translateY(-pillarHeight / 2);
+        scene.add( boardMesh )
+    }
 
     // light
-    var directionalLight = new DirectionalLight( 0xffffff, 0.5 );
-    scene.add( directionalLight );
+    {
+        var directionalLight = new DirectionalLight( 0xffffff, 1. );
+        directionalLight.rotateX(0.1);
+        directionalLight.rotateZ(0.5);
+        scene.add( directionalLight );
+    }
 
+    // fog
+    {
+        scene.fog = new Fog(0x000000, 1, 800);
+    }
     
     // skybox
     {
-        const textureLoader = new TextureLoader();
+       
         const front = textureLoader.load(yellowCloudForward);
         const back = textureLoader.load(yellowCloudBack);
         const up = textureLoader.load(yellowCloudUp);
@@ -73,12 +146,12 @@ export const initThree = (domElement) => {
         const left = textureLoader.load(yellowCloudLeft);
 
         const matArray = [
-            new MeshBasicMaterial({ map: front, side: BackSide }),
-            new MeshBasicMaterial({ map: back, side: BackSide }),
-            new MeshBasicMaterial({ map: up, side: BackSide }),
-            new MeshBasicMaterial({ map: down, side: BackSide }),
-            new MeshBasicMaterial({ map: right, side: BackSide }),
-            new MeshBasicMaterial({ map: left, side: BackSide })
+            new MeshBasicMaterial({ map: front, side: BackSide, fog: false }),
+            new MeshBasicMaterial({ map: back, side: BackSide, fog: false }),
+            new MeshBasicMaterial({ map: up, side: BackSide, fog: false }),
+            new MeshBasicMaterial({ map: down, side: BackSide, fog: false }),
+            new MeshBasicMaterial({ map: right, side: BackSide, fog: false }),
+            new MeshBasicMaterial({ map: left, side: BackSide, fog: false })
         ];
         
         const skyboxGeo = new BoxGeometry(10000, 10000, 10000);
