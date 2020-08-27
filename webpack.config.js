@@ -4,7 +4,6 @@ const HtmlWebPackPlugin = require("html-webpack-plugin");
 module.exports = {
   entry: './src/App.jsx',
   target: 'web',
-  node: { "fs": "empty" },
   module: { 
     rules: [
       {
@@ -25,6 +24,12 @@ module.exports = {
             loader: "html-loader"
           }
         ]
+      },
+      {
+          test: /\.(png|jpg|gif)$/,
+          use: [
+            'file-loader',
+          ],
       },
       {
         test: /\.wasm$/,
