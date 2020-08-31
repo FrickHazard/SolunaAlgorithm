@@ -1,5 +1,6 @@
 // some logic copied form here https://gist.github.com/surma/b2705b6cca29357ebea1c9e6e15684cc
 const HtmlWebPackPlugin = require("html-webpack-plugin");
+const path = require("path");
 
 module.exports = {
   entry: './src/App.jsx',
@@ -30,6 +31,15 @@ module.exports = {
           use: [
             'file-loader',
           ],
+      },
+      {
+        test: /\.(json)$/,
+        use: [
+          'file-loader',
+        ],
+        include: [
+          path.resolve(__dirname, 'assets'),
+        ]
       },
       {
         test: /\.wasm$/,

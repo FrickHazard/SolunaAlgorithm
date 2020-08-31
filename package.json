@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --mode production",
-    "watch" : "webpack -w --mode development"
+    "watch": "webpack -w --mode development"
   },
   "repository": {
     "type": "git",
@@ -28,6 +28,7 @@
     "file-loader": "^6.0.0",
     "html-loader": "^1.3.0",
     "html-webpack-plugin": "^4.3.0",
+    "three_gpu_picking": "^1.0.0",
     "webpack": "^4.44.1",
     "webpack-cli": "^3.3.12"
   },
