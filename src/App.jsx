@@ -1,6 +1,6 @@
 import ReactDOM from "react-dom";
 import React from "react"
-import "./interopt.js"
+import Interopt from "./interopt.js"
 import { initThree } from './initThree';
 
 const App = () => {

@@ -16,6 +16,7 @@ import {
     DoubleSide,
     KeepStencilOp,
     CylinderGeometry,
+    TextGeometry,
 } from 'three';
 import { Piece } from './visuals/piece';
 import helevetikerFont from './assets/helvetiker_bold.typeface.json';
@@ -68,7 +69,7 @@ export class PieceSystem {
         }
 
         for (let i = 1; i <= colorCount; i++) {
-            this.labelGeometries.push(new TextBufferGeometry(i.toString(), {
+            this.labelGeometries.push(new TextGeometry(i.toString(), {
                 font: new Font(helevetikerFont),
                 size: 1.5,
                 height: 0.5,

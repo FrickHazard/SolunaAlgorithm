@@ -65,6 +65,7 @@ struct ModuleState {
     std::vector<std::vector<uint32_t>> allGameStates;
     std::unordered_map<std::vector<uint32_t>, std::vector<std::vector<uint32_t>>, GameStateHash> moveMap;
     std::unordered_map<std::vector<uint32_t>, BranchResult, GameStateHash> branchResultMap;
+    std::vector<uint32_t> initialStates;
 } state;
 
 // recursive function, rewrite into iterative, this is the biggest choke point, exponential growth in color count
@@ -441,8 +442,29 @@ void getAllSymmertricBoardSpaces(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
     std::vector<uint32_t> ids;
     generatePartitionIdMaps(partitionToIdMap, idToPartitionMap, idPieceCounts, ids, PIECE_COUNT);
 
+    std::vector<uint32_t> initialStates;
     std::vector<std::vector<uint32_t>> allGameStates;
     getAllGameStates(allGameStates, idPieceCounts, ids, 0, COLOR_COUNT, PIECE_COUNT, {}, 0);
+    
+    // get initial states,
+    {
+        uint32_t i = 0;
+        LOOP:
+        for (;i < allGameStates.size(); ++i) {
+            uint32_t c =0;
+            for (uint32_t j = 0; j < allGameStates[i].size(); ++j) {
+                std::vector<PartitionNumber> & part = idToPartitionMap[allGameStates[i][j]];
+                if (part.size() != 1 || part[0].number != 1) {
+                    ++i;
+                    goto LOOP;
+                }
+                c += part[0].count;
+            }
+            if (c == PIECE_COUNT) {
+                initialStates.push_back(i);
+            }
+        }
+    }
 
     std::unordered_map<std::vector<uint32_t>, std::vector<std::vector<uint32_t>>, GameStateHash> moveMap;
 
@@ -460,6 +482,7 @@ void getAllSymmertricBoardSpaces(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
     state.PIECE_COUNT = PIECE_COUNT;
     state.allGameStates = allGameStates;
     state.branchResultMap = branchResultMap;
+    state.initialStates = initialStates;
     state.moveMap = moveMap;
 }
 
@@ -481,10 +504,38 @@ uint32_t * getGameState(uint32_t index) {
     return state.allGameStates[index].data();
 }
 
+uint32_t getGameStateLength(uint32_t index) {
+    return (uint32_t)state.allGameStates[index].size();
+}
+
+uint32_t getBoardNextPossibleMovesCount(uint32_t index){
+    return (uint32_t)state.moveMap[state.allGameStates[index]].size();
+}
+std::vector<uint32_t> * getBoardNextPossibleMoves(uint32_t index) {
+     return state.moveMap[state.allGameStates[index]].data();
+}
+BranchResult * getBoardBranchResult(uint32_t index) {
+    return &state.branchResultMap[state.allGameStates[index]];
+}
+
+uint32_t * getInitialStates() {
+    return state.initialStates.data();
+}
+uint32_t getInitialStatesCount() {
+    return (uint32_t)state.initialStates.size();
+}
+
+
+//uint32_t  getInitialStates() {
+//    if (index >= state.allGameStates.size()) return 0;
+//    return (uint32_t)state.allGameStates[index].size();
+//}
+
 #ifdef __cplusplus
 }
 #endif
 
 //int main() {
+//    calculateAllGameStates(4, 12);
 //    return 0;
 //}
