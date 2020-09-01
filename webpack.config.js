@@ -15,7 +15,7 @@ module.exports = {
         }
       },    
       {
-        test: /\.js$/,
+        test: /\.(js|jsx)$/,
         loader: require.resolve('@open-wc/webpack-import-meta-loader'),
       }, 
       {

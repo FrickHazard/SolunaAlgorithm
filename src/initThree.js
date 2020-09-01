@@ -26,8 +26,6 @@ import {
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-import helevetikerFont from './assets/helvetiker_bold.typeface.json';
-
 import { Pillar} from './visuals/pillar';
 import { Skybox } from './visuals/skybox';
 import { PieceSystem } from './PieceSystem';
@@ -79,7 +77,7 @@ export const initThree = (domElement) => {
         scene.fog = new Fog(0x000000, 1, 800);
     }
  
-    const pieceSystem = new PieceSystem(4, [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]);
+    const pieceSystem = new PieceSystem();
     scene.add(pieceSystem.group);
     
     window.onclick = (ev) => {
@@ -99,4 +97,6 @@ export const initThree = (domElement) => {
     };
 
     animate();
+
+    return pieceSystem;
 };

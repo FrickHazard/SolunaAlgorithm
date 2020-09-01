@@ -1,6 +1,6 @@
 # SolunaAlgorithm
  
-em++ main.cpp -s EXPORTED_FUNCTIONS='["_calculateAllGameStates", "_getGameState"]' -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' -O3 -s EXPORT_ES6=1 -s MODULARIZE=1 -s EXPORT_NAME="createModule" -s ENVIRONMENT="web"
+em++ main.cpp -s EXPORTED_FUNCTIONS='["_calculateAllGameStates", "_getGameState","_getInitialStates", "_getInitialStatesCount","_getGameState","_getGameStateCount", "_getBoardBranchResult", "_getBoardNextPossibleMoves","_getBoardNextPossibleMovesCount","_getPartition","_getPartitionCount"]' -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' -O3 -s EXPORT_ES6=1 -s MODULARIZE=1 -s EXPORT_NAME="createModule" -s ENVIRONMENT="web"
 
 https://3dtextures.me/2020/06/11/fabric-nylon-weave-001/
 https://3dtextures.me/2019/07/15/concrete-column-001/

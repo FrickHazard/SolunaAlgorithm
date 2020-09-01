@@ -29,6 +29,11 @@ import rough from "./assets/White_Marble_004_SD/White_Marble_004_ROUGH.jpg";
 import { SelectionPiece } from './visuals/selectionPiece';
 
 const textureLoader = new TextureLoader();
+const diffuseMap = textureLoader.load(diffuse);
+const bumpMap = textureLoader.load(ambientOcclusion);
+const normalMap = textureLoader.load(normal);
+const roughnessMap = textureLoader.load(rough);
+const displacementMap = textureLoader.load(displacment);   
 
 const cylinderGeo = new CylinderGeometry(2, 2, 0.5, 32, 8);
 cylinderGeo.translate(0, 0.5, 0);
@@ -36,12 +41,13 @@ cylinderGeo.computeVertexNormals();
 console.log(cylinderGeo.toJSON());
 
 export class PieceSystem {
-    constructor(colorCount, colorPartition) {
-        const diffuseMap = textureLoader.load(diffuse);
-        const bumpMap = textureLoader.load(ambientOcclusion);
-        const normalMap = textureLoader.load(normal);
-        const roughnessMap = textureLoader.load(rough);
-        const displacementMap = textureLoader.load(displacment);       
+    constructor() {
+        this.group  = new Group();   
+        this.pieceMap = new Map();
+    }
+
+    setState(colorCount, gameState) {
+        this.group.children = [];
 
         this.labelMaterial = new MeshStandardMaterial({
             color: 0xff5f00,
@@ -90,24 +96,29 @@ export class PieceSystem {
         }
         this.piecePositions.sort(() => Math.random() - 0.5);
             
-        this.pieceMap = new Map();
-        this.group  = new Group(); 
+        this.pieceMap = new Map();    
         this.selectedPiece = this.createSelectedPiece();
         this.group.add(this.selectedPiece);
 
 
         let i = 0;
-        for (const idx of colorPartition) {
-            const piece = new Piece({
-                pieceGeometry: cylinderGeo,
-                pieceMaterial: this.pieceMaterials[idx],
-                labelMaterial: this.labelMaterial,
-                labelGeometry: this.labelGeometries[idx]
-            });
-            this.pieceMap.set(piece.id, piece);
-            this.group.add(piece);
-            piece.setPostition(this.piecePositions[i], 0);
-            i++;
+        let j = 0;
+        for (const partitionGroup of gameState) {
+            for (const partition of partitionGroup) {
+                for (let k = 0; k < partition.count; ++k) {
+                    const piece = new Piece({
+                        pieceGeometry: cylinderGeo,
+                        pieceMaterial: this.pieceMaterials[j],
+                        labelMaterial: this.labelMaterial,
+                        labelGeometry: this.labelGeometries[j]
+                    });
+                    this.pieceMap.set(piece.id, piece);
+                    this.group.add(piece);
+                    piece.setPostition(this.piecePositions[i], 0);
+                    i++;
+                }
+            }
+            ++j;
         }
     }
     

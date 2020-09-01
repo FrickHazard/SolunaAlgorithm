@@ -66,6 +66,7 @@ struct ModuleState {
     std::unordered_map<std::vector<uint32_t>, std::vector<std::vector<uint32_t>>, GameStateHash> moveMap;
     std::unordered_map<std::vector<uint32_t>, BranchResult, GameStateHash> branchResultMap;
     std::vector<uint32_t> initialStates;
+    std::unordered_map<uint32_t, std::vector<PartitionNumber>> idToPartitionMap;
 } state;
 
 // recursive function, rewrite into iterative, this is the biggest choke point, exponential growth in color count
@@ -384,50 +385,39 @@ BranchResult SolunaAlgorithm
 (
     const std::vector<uint32_t> & gameState,
     const std::unordered_map<std::vector<uint32_t>, std::vector<std::vector<uint32_t>>, GameStateHash>& moveMap,
-    std::unordered_map<std::vector<uint32_t>, BranchResult, GameStateHash>& branchResultMap,
-    uint32_t parity = 0
+    std::unordered_map<std::vector<uint32_t>, BranchResult, GameStateHash>& branchResultMap
 ) {
     auto cached = branchResultMap.find(gameState);
     if (cached != branchResultMap.end()) {
         return cached->second;
     }
-
-    const bool opponentsTurn = (parity % 2);
-
+    
     assert(moveMap.find(gameState) != moveMap.end());
 
     const std::vector<std::vector<uint32_t>> & moveStates = moveMap.at(gameState);
 
-    // leaf node
+    // leaf node, if no moves you lose
     if (moveStates.size() == 0) {
-        BranchResult result = { 1, (opponentsTurn ? 1u : 0u), opponentsTurn };
-        branchResultMap.insert({ gameState, result });
-        return result;
+        return { 1, 0, false };
     }
-
+    
     BranchResult result = { 0, 0, false };
 
     for (uint32_t i =0; i < moveStates.size(); i++) {
-        const BranchResult branchResult = SolunaAlgorithm(moveStates[i], moveMap, branchResultMap, parity + 1);
+        const BranchResult branchResult = SolunaAlgorithm(moveStates[i], moveMap, branchResultMap);
 
-        // on your turn if there exists a branch where you win return true
-        if (!opponentsTurn && branchResult.guaranteedWin) {
-            if (parity == 0) {
-                // returnMove = move;
-            }
+        if (!branchResult.guaranteedWin) {
             result.guaranteedWin = true;
         }
-
+        
         result.leafCount += branchResult.leafCount;
-        result.leafVictory += branchResult.leafVictory;
+        result.leafVictory += (branchResult.leafCount - branchResult.leafVictory);
     }
 
     // choose best path here
-    if (!opponentsTurn && !result.guaranteedWin) {
-        //
-    }
 
     branchResultMap.insert({ gameState, result });
+    
     return result;
 }
 
@@ -473,9 +463,26 @@ void getAllSymmertricBoardSpaces(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
     }
 
     std::unordered_map<std::vector<uint32_t>, BranchResult, GameStateHash> branchResultMap;
+    std::unordered_map<std::vector<uint32_t>, BranchResult, GameStateHash> branchResultMapOddParity;
     for (uint32_t i = 0; i < allGameStates.size(); ++i) {
         SolunaAlgorithm(allGameStates[i], moveMap, branchResultMap);
     }
+//    {
+//        uint32_t cc = 0;
+//        for (uint32_t i = 0; i < initialStates.size(); ++i) {
+//            if (branchResultMap[allGameStates[initialStates[i]]].guaranteedWin){
+//                ++cc;
+//                for (uint32_t j = 0; j < allGameStates[initialStates[i]].size(); ++j) {
+//                    for (uint32_t k = 0; k < idToPartitionMap[allGameStates[initialStates[i]][j]].size(); ++k) {
+//                        std::cout << idToPartitionMap[allGameStates[initialStates[i]][j]][k].number << " * " << idToPartitionMap[allGameStates[initialStates[i]][j]][k].count << " ";
+//                    }
+//                    std ::cout << std::endl;
+//                }
+//                std ::cout << std::endl;
+//            }
+//       }
+//       std::cout << cc << std::endl;
+//    }
     
     // TODO fix this copying here!
     state.COLOR_COUNT = COLOR_COUNT;
@@ -483,6 +490,7 @@ void getAllSymmertricBoardSpaces(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
     state.allGameStates = allGameStates;
     state.branchResultMap = branchResultMap;
     state.initialStates = initialStates;
+    state.idToPartitionMap = idToPartitionMap;
     state.moveMap = moveMap;
 }
 
@@ -500,11 +508,18 @@ bool calculateAllGameStates(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
     return true;
 }
 
+PieceStack * getPartition(uint32_t id) {
+    return state.idToPartitionMap[id].data();
+}
+uint32_t getPartitionCount(uint32_t id){
+    return (uint32_t)state.idToPartitionMap[id].size();
+}
+
 uint32_t * getGameState(uint32_t index) {
     return state.allGameStates[index].data();
 }
 
-uint32_t getGameStateLength(uint32_t index) {
+uint32_t getGameStateCount(uint32_t index) {
     return (uint32_t)state.allGameStates[index].size();
 }
 
@@ -514,6 +529,8 @@ uint32_t getBoardNextPossibleMovesCount(uint32_t index){
 std::vector<uint32_t> * getBoardNextPossibleMoves(uint32_t index) {
      return state.moveMap[state.allGameStates[index]].data();
 }
+
+
 BranchResult * getBoardBranchResult(uint32_t index) {
     return &state.branchResultMap[state.allGameStates[index]];
 }
@@ -524,6 +541,12 @@ uint32_t * getInitialStates() {
 uint32_t getInitialStatesCount() {
     return (uint32_t)state.initialStates.size();
 }
+//uint32 * getPartition(uint32_t partitionIndex) {
+//     return state.
+//}
+//uint32 * getPartitionCount(uint32_t partitionIndex) {
+//
+//}
 
 
 //uint32_t  getInitialStates() {
