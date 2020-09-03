@@ -34,6 +34,7 @@ export class Skybox extends Mesh {
             new MeshBasicMaterial({ map: left, side: BackSide, fog: false })
         ];
         
+        // TODO implictly depedent on Fareplane, should just be a custom shader
         const skyboxGeo = new BoxGeometry(10000, 10000, 10000);
 
         super(skyboxGeo, matArray);

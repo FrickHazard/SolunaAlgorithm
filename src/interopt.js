@@ -51,7 +51,9 @@ const interopt =   {
             leafCount : new Uint32Array(Module.HEAP32.buffer, branchPtr, 1)[0],
             leafVictory: new Uint32Array(Module.HEAP32.buffer, branchPtr + 4, 1)[0],
             guaranteedWin: !!(new Uint8Array(Module.HEAP8.buffer, branchPtr+ 4 + 4, 1)[0])
-        };      
+        };
+
+        return branchResult;
     },
 
     getGameState(gameIndex) {
@@ -59,6 +61,18 @@ const interopt =   {
         const gameCount = Module._getGameStateCount(gameIndex);
         const gameState = new Uint32Array(Module.HEAP32.buffer, gamePtr, gameCount);
         return gameState;
+    },
+
+    getNextPossibleMoves(gameIndex) {
+        // wasm ptr = 4 bytes
+        const result = [];
+        const gameStatesPtr = Module._getBoardNextPossibleMoves(gameIndex);
+        const gameStatesCount = Module._getBoardNextPossibleMovesCount(gameIndex);
+        for  (let i = 0; i < gameStatesCount; ++i) {
+            const gameStateIndex = new Uint32Array(Module.HEAP32.buffer, gameStatesPtr + (i * 4) , 1);           
+            result.push(this.getGameState(gameStateIndex));
+        }
+        return result;
     },
 
     getPartition(partitionId) {

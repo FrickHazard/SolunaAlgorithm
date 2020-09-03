@@ -29,6 +29,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { Pillar} from './visuals/pillar';
 import { Skybox } from './visuals/skybox';
 import { PieceSystem } from './PieceSystem';
+import {SelectionPiece} from './visuals/selectionPiece';
 
 import { GPUPicker } from 'three_gpu_picking';
 
@@ -81,7 +82,9 @@ export const initThree = (domElement) => {
     scene.add(pieceSystem.group);
     
     window.onclick = (ev) => {
-        const objectId = gpuPicker.pick(ev.clientX / renderer.getPixelRatio(), ev.clientY / renderer.getPixelRatio());
+        const objectId = gpuPicker.pick(ev.clientX / renderer.getPixelRatio(), ev.clientY / renderer.getPixelRatio(), (obj3d) => {        
+            return !(obj3d.ignorePick);
+        });
         if (pieceSystem.pieceMap.has(objectId)) {
             pieceSystem.selectPiece(objectId);
         }

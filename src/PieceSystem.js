@@ -35,19 +35,20 @@ const normalMap = textureLoader.load(normal);
 const roughnessMap = textureLoader.load(rough);
 const displacementMap = textureLoader.load(displacment);   
 
-const cylinderGeo = new CylinderGeometry(2, 2, 0.5, 32, 8);
+const cylinderGeo = new CylinderGeometry(2, 2, 1, 32, 8);
 cylinderGeo.translate(0, 0.5, 0);
 cylinderGeo.computeVertexNormals();
-console.log(cylinderGeo.toJSON());
 
 export class PieceSystem {
     constructor() {
         this.group  = new Group();   
         this.pieceMap = new Map();
+        this.selectionGroup = new Group();
     }
 
     setState(colorCount, gameState) {
         this.group.children = [];
+        this.group.add(this.selectionGroup);
 
         this.labelMaterial = new MeshStandardMaterial({
             color: 0xff5f00,
@@ -55,7 +56,7 @@ export class PieceSystem {
         });
     
         this.labelGeometries = [];
-        const mat = new MeshStandardMaterial({
+        const pieceMaterial = new MeshStandardMaterial({
             // color: 0xffffff,
             // emissive: 0x111111,
             map: diffuseMap,
@@ -66,13 +67,6 @@ export class PieceSystem {
             bumpMap
             // roughnessMap,   
         });
-
-        const colors = [0x333133, 0x223333, 0x332133, 0x433433, 0x333355, 0x330033, 0x304000 ];
-        this.pieceMaterials = [];
-        for (const color of colors) {
-            this.pieceMaterials.push(mat.clone());
-            this.pieceMaterials[this.pieceMaterials.length - 1].color = new Color(color);
-        }
 
         for (let i = 1; i <= colorCount; i++) {
             this.labelGeometries.push(new TextGeometry(i.toString(), {
@@ -86,49 +80,58 @@ export class PieceSystem {
             this.labelGeometries[i-1].center();
         }
 
-        this.piecePositions = [];
-        const ratio = 50 /4;
-        for (let x = 3; x < ratio - 2; ++x) {
-            for (let y = 3; y < ratio - 2; ++y){
-                if ((x + y) % 2 == 0) continue;
-                this.piecePositions.push(new Vector2((x - (ratio / 2)) * 4 - 1, (y - (ratio /2)) * 4 - 1)); 
+        {
+            this.piecePositions = [];
+            const ratio = 50 /4;
+            for (let x = 3; x < ratio - 2; ++x) {
+                for (let y = 3; y < ratio - 2; ++y){
+                    if ((x + y) % 2 == 0) continue;
+                    this.piecePositions.push(new Vector2((x - (ratio / 2)) * 4 - 1, (y - (ratio /2)) * 4 - 1)); 
+                }
             }
+            this.piecePositions.sort(() => Math.random() - 0.5);
         }
-        this.piecePositions.sort(() => Math.random() - 0.5);
             
         this.pieceMap = new Map();    
-        this.selectedPiece = this.createSelectedPiece();
-        this.group.add(this.selectedPiece);
-
 
         let i = 0;
-        let j = 0;
-        for (const partitionGroup of gameState) {
-            for (const partition of partitionGroup) {
-                for (let k = 0; k < partition.count; ++k) {
+        let colorIndex = 0;
+        for (const partition of gameState) {
+            for (const partitionNumb of partition) {
+                for (let k = 0; k < partitionNumb.count; ++k) {                
                     const piece = new Piece({
                         pieceGeometry: cylinderGeo,
-                        pieceMaterial: this.pieceMaterials[j],
+                        pieceMaterial: pieceMaterial,
                         labelMaterial: this.labelMaterial,
-                        labelGeometry: this.labelGeometries[j]
+                        labelGeometry: this.labelGeometries[colorIndex],
+                        height: partitionNumb.number
                     });
-                    this.pieceMap.set(piece.id, piece);
-                    this.group.add(piece);
+                    this.pieceMap.set(piece.id, [colorIndex, partitionNumb, piece]);
+                    this.group.add(piece);                
                     piece.setPostition(this.piecePositions[i], 0);
                     i++;
                 }
             }
-            ++j;
+            ++colorIndex;
         }
     }
-    
-    createSelectedPiece() {
-        return new SelectionPiece();
-    }
 
-    selectPiece (id) {
-        const piece = this.pieceMap.get(id);  
-        this.selectedPiece.setfromPiece(piece)
-        this.selectedPiece.visible = true;
+    selectPiece (id) {  
+        this.selectionGroup .children = [];    
+        const [selectedColorIndex, selectedPartitionNumb, selectedPieceVisual] = this.pieceMap.get(id);
+
+        for (const pair of this.pieceMap) {
+            const [pieceId, [colorIndex, partitionNumb, pieceVisual]] = pair;         
+            if (pieceId === id) {
+                const selectedPieceVisual = new SelectionPiece(new Color(0xff00ff));
+                selectedPieceVisual.setFromPiece(pieceVisual);
+                this.selectionGroup.add(selectedPieceVisual);
+            }
+            else if (partitionNumb.number === selectedPartitionNumb.number || colorIndex === selectedColorIndex) {
+                const selectedPieceVisual = new SelectionPiece(new Color(0x00ff00));
+                selectedPieceVisual.setFromPiece(pieceVisual);
+                this.selectionGroup.add(selectedPieceVisual);
+            }
+        }
     }
 }

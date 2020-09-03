@@ -63,10 +63,10 @@ struct ModuleState {
     uint32_t COLOR_COUNT;
     uint32_t PIECE_COUNT;
     std::vector<std::vector<uint32_t>> allGameStates;
-    std::unordered_map<std::vector<uint32_t>, std::vector<std::vector<uint32_t>>, GameStateHash> moveMap;
-    std::unordered_map<std::vector<uint32_t>, BranchResult, GameStateHash> branchResultMap;
+    std::vector<std::vector<uint32_t>> allMoves;
+    std::vector<BranchResult> allBranchResults;
     std::vector<uint32_t> initialStates;
-    std::unordered_map<uint32_t, std::vector<PartitionNumber>> idToPartitionMap;
+    std::vector<std::vector<PartitionNumber>> allPartitions;
 } state;
 
 // recursive function, rewrite into iterative, this is the biggest choke point, exponential growth in color count
@@ -75,7 +75,7 @@ void getAllGameStates
 (
     std::vector<std::vector<uint32_t>> & wResult,
     const std::vector<uint32_t> & optionPieceCount,
-    const std::vector<uint32_t> & options,
+    const uint32_t optionCount,
     uint32_t optionIndex,
     const uint32_t & maxItemCount,
     const uint32_t & maxPieceCount,
@@ -83,20 +83,20 @@ void getAllGameStates
     uint32_t currentPieceCount
 )
 {
-    for (uint32_t i = optionIndex; i < options.size(); ++i) {
+    for (uint32_t i = optionIndex; i < optionCount; ++i) {
 
         uint32_t idPieceCount = optionPieceCount[i];
 
         if (idPieceCount + currentPieceCount > maxPieceCount) continue;
        
         std::vector<uint32_t> copy = current;
-        copy.push_back(options[i]);
+        copy.push_back(i);
       
         if (currentPieceCount + idPieceCount == maxPieceCount) {
             wResult.push_back(copy);
         }
         else if (copy.size() < maxItemCount) {
-            getAllGameStates(wResult, optionPieceCount, options, i, maxItemCount, maxPieceCount, copy, currentPieceCount + idPieceCount);
+            getAllGameStates(wResult, optionPieceCount, optionCount, i, maxItemCount, maxPieceCount, copy, currentPieceCount + idPieceCount);
         }
     }
 }
@@ -140,26 +140,23 @@ std::vector<std::vector<PartitionNumber>> nextPartition(std::vector<std::vector<
 void generatePartitionIdMaps
 (
     std::unordered_map<std::vector<PartitionNumber>, uint32_t, PartitionHash> &partitionToIdMap,
-    std::unordered_map<uint32_t, std::vector<PartitionNumber>> &idToPartitionMap,
+    std::vector<std::vector<PartitionNumber>> &allPartitions,
     std::vector<uint32_t> & idPieceCounts,
-    std::vector<uint32_t> & ids,
     const uint32_t PIECE_COUNT
 )
 {
     partitionToIdMap = std::unordered_map<std::vector<PartitionNumber>, uint32_t, PartitionHash>();
-    idToPartitionMap = std::unordered_map<uint32_t, std::vector<PartitionNumber>>();
+    allPartitions = std::vector<std::vector<PartitionNumber>>();
     idPieceCounts = std::vector<uint32_t>();
-    ids = std::vector<uint32_t>();
 
     std::vector<std::vector<PartitionNumber>> heightCountPartition;
     uint32_t partitionId = 0;
     for (uint32_t i = 1; i <= PIECE_COUNT; ++i) {
         heightCountPartition = nextPartition(heightCountPartition, i);
         for (uint32_t j = 0; j < heightCountPartition.size(); ++j) {
-            ids.push_back(partitionId);
             idPieceCounts.push_back(i);
             partitionToIdMap.insert({ heightCountPartition[j], partitionId });
-            idToPartitionMap.insert({ partitionId, heightCountPartition[j] });
+            allPartitions.push_back(heightCountPartition[j]);
             ++partitionId;
         }
     }
@@ -257,14 +254,15 @@ std::vector<uint32_t> copyAndApplyPartitionIdChanges
     return result;
 }
 
-std::vector<std::vector<uint32_t>> getPossibleNextStates
+std::vector<uint32_t> getPossibleNextStates
 (
     const std::vector<uint32_t> & gameState,
-    const std::unordered_map<uint32_t, std::vector<PartitionNumber>> & idToPartitionMap,
+    const std::vector<std::vector<PartitionNumber>> & allPartitions,
     const std::unordered_map<std::vector<PartitionNumber>, uint32_t, PartitionHash>& partitionToIdMap,
-    const std::vector<uint32_t> & pieceCountVec
+    const std::vector<uint32_t> & pieceCountVec,
+    const std::unordered_map<std::vector<uint32_t>, uint32_t, GameStateHash> & gameStateToIndexMap
 ) {
-    std::vector<std::vector<uint32_t>> result;
+    std::vector<uint32_t> result;
 
     std::vector<uint32_t> heightPartitionIds;
     std::vector<std::vector<PartitionNumber>> heightPartitions;
@@ -275,13 +273,13 @@ std::vector<std::vector<uint32_t>> getPossibleNextStates
         if (gameState[currIdx] != gameState[i]) {
             heightPartitionIds.push_back(gameState[currIdx]);
             heightPartitionCount.push_back(i - currIdx);
-            heightPartitions.push_back(idToPartitionMap.at(gameState[currIdx]));
+            heightPartitions.push_back(allPartitions[gameState[currIdx]] );
             currIdx = i;
         }
         if (i == gameState.size() - 1) {
             heightPartitionIds.push_back(gameState[currIdx]);
             heightPartitionCount.push_back(i - currIdx + 1);
-            heightPartitions.push_back(idToPartitionMap.at(gameState[currIdx]));
+            heightPartitions.push_back(allPartitions[gameState[currIdx]]);
         }
     }
 
@@ -292,7 +290,8 @@ std::vector<std::vector<uint32_t>> getPossibleNextStates
             // If the count of pieces is more than one, we can merge with piece of same height and color
             if (partitionNumb.count > 1) {
                 std::vector<PartitionNumber> updatedPartition = copyAndApplyPartitionChanges(heightPartitions[i], { partitionNumb.number, partitionNumb.number }, partitionNumb.number + partitionNumb.number);
-                result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i] }, { partitionToIdMap.at(updatedPartition) }));
+                
+                 result.push_back(gameStateToIndexMap.at(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i] }, { partitionToIdMap.at(updatedPartition) })));
             }
             
             // for every other piece of same color, but different height, we consider a symmetric merge of the two pieces
@@ -301,7 +300,7 @@ std::vector<std::vector<uint32_t>> getPossibleNextStates
                 PartitionNumber partitionNumbOther = heightPartitions[i][subIt];
                 
                 std::vector<PartitionNumber> updatedPartition = copyAndApplyPartitionChanges(heightPartitions[i], { partitionNumb.number, partitionNumbOther.number },partitionNumb.number + partitionNumbOther.number);
-                result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i] }, { partitionToIdMap.at(updatedPartition) }));
+                result.push_back(gameStateToIndexMap.at(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i] }, { partitionToIdMap.at(updatedPartition) })));
             }
         }
     }
@@ -321,7 +320,7 @@ std::vector<std::vector<uint32_t>> getPossibleNextStates
                 std::vector<uint32_t> partitionIdsToAdd;
                 if (updatedPartition1.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(updatedPartition1));
                 if (updatedPartition2.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(updatedPartition2));
-                result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i], heightPartitionIds[i] }, partitionIdsToAdd));
+                result.push_back(gameStateToIndexMap.at(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[i], heightPartitionIds[i] }, partitionIdsToAdd)));
             }
         }
     }
@@ -358,7 +357,7 @@ std::vector<std::vector<uint32_t>> getPossibleNextStates
                     std::vector<uint32_t> partitionIdsToAdd;
                     if (updatedPartition1.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(updatedPartition1));
                     if (updatedPartition2.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(updatedPartition2));
-                    result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[minIndices[i]], heightPartitionIds[minIndices[j]] }, partitionIdsToAdd));
+                    result.push_back(gameStateToIndexMap.at(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[minIndices[i]], heightPartitionIds[minIndices[j]] }, partitionIdsToAdd)));
                 }
                 {
                     PartitionNumber partitionNumb = heightPartitions[minIndices[i]][indices[minIndices[i]]];
@@ -370,7 +369,7 @@ std::vector<std::vector<uint32_t>> getPossibleNextStates
                    std::vector<uint32_t> partitionIdsToAdd;
                    if (updatedPartition1.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(updatedPartition1));
                    if (updatedPartition2.size() > 0) partitionIdsToAdd.push_back(partitionToIdMap.at(updatedPartition2));
-                   result.push_back(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[minIndices[i]], heightPartitionIds[minIndices[j]] }, partitionIdsToAdd));
+                   result.push_back(gameStateToIndexMap.at(copyAndApplyPartitionIdChanges(gameState, { heightPartitionIds[minIndices[i]], heightPartitionIds[minIndices[j]] }, partitionIdsToAdd)));
                 }
             }
             ++indices[minIndices[i]];
@@ -383,28 +382,27 @@ std::vector<std::vector<uint32_t>> getPossibleNextStates
 
 BranchResult SolunaAlgorithm
 (
-    const std::vector<uint32_t> & gameState,
-    const std::unordered_map<std::vector<uint32_t>, std::vector<std::vector<uint32_t>>, GameStateHash>& moveMap,
-    std::unordered_map<std::vector<uint32_t>, BranchResult, GameStateHash>& branchResultMap
+    const uint32_t i,
+    const std::vector<std::vector<uint32_t>> & allGameStates,
+    const std::vector<std::vector<uint32_t>> & allMoves,
+    std::vector<BranchResult> & allBranchResults
 ) {
-    auto cached = branchResultMap.find(gameState);
-    if (cached != branchResultMap.end()) {
-        return cached->second;
+    auto cached = allBranchResults[i];
+    if (!(cached.guaranteedWin == 0 && cached.leafCount == 0 && cached.leafVictory == 0)) {
+        return cached;
     }
-    
-    assert(moveMap.find(gameState) != moveMap.end());
 
-    const std::vector<std::vector<uint32_t>> & moveStates = moveMap.at(gameState);
+    const std::vector<uint32_t> & moveStateIndices = allMoves[i];
 
     // leaf node, if no moves you lose
-    if (moveStates.size() == 0) {
+    if (moveStateIndices.size() == 0) {
         return { 1, 0, false };
     }
     
     BranchResult result = { 0, 0, false };
 
-    for (uint32_t i =0; i < moveStates.size(); i++) {
-        const BranchResult branchResult = SolunaAlgorithm(moveStates[i], moveMap, branchResultMap);
+    for (uint32_t i =0; i < moveStateIndices.size(); i++) {
+        const BranchResult branchResult = SolunaAlgorithm(moveStateIndices[i], allGameStates, allMoves, allBranchResults);
 
         if (!branchResult.guaranteedWin) {
             result.guaranteedWin = true;
@@ -416,7 +414,7 @@ BranchResult SolunaAlgorithm
 
     // choose best path here
 
-    branchResultMap.insert({ gameState, result });
+    allBranchResults[i] = result;;
     
     return result;
 }
@@ -426,15 +424,22 @@ void getAllSymmertricBoardSpaces(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
     state = {0};
     
     std::unordered_map<std::vector<PartitionNumber>, uint32_t, PartitionHash> partitionToIdMap;
-    std::unordered_map<uint32_t, std::vector<PartitionNumber>> idToPartitionMap;
+    std::vector<std::vector<PartitionNumber>> allPartitions;
     // essentially just the sum of ids
     std::vector<uint32_t> idPieceCounts;
-    std::vector<uint32_t> ids;
-    generatePartitionIdMaps(partitionToIdMap, idToPartitionMap, idPieceCounts, ids, PIECE_COUNT);
+    generatePartitionIdMaps(partitionToIdMap, allPartitions, idPieceCounts, PIECE_COUNT);
 
     std::vector<uint32_t> initialStates;
     std::vector<std::vector<uint32_t>> allGameStates;
-    getAllGameStates(allGameStates, idPieceCounts, ids, 0, COLOR_COUNT, PIECE_COUNT, {}, 0);
+    getAllGameStates(allGameStates, idPieceCounts, (uint32_t)allPartitions.size(), 0, COLOR_COUNT, PIECE_COUNT, {}, 0);
+    
+    std::unordered_map<std::vector<uint32_t>, uint32_t, GameStateHash> gameStateToIndexMap;
+    gameStateToIndexMap.reserve(allGameStates.size());
+    {
+        for (uint32_t i =0; i < allGameStates.size(); ++i) {
+            gameStateToIndexMap.insert({ allGameStates[i], i });
+        }
+    }
     
     // get initial states,
     {
@@ -443,7 +448,7 @@ void getAllSymmertricBoardSpaces(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
         for (;i < allGameStates.size(); ++i) {
             uint32_t c =0;
             for (uint32_t j = 0; j < allGameStates[i].size(); ++j) {
-                std::vector<PartitionNumber> & part = idToPartitionMap[allGameStates[i][j]];
+                std::vector<PartitionNumber> & part = allPartitions[allGameStates[i][j]];
                 if (part.size() != 1 || part[0].number != 1) {
                     ++i;
                     goto LOOP;
@@ -456,42 +461,26 @@ void getAllSymmertricBoardSpaces(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
         }
     }
 
-    std::unordered_map<std::vector<uint32_t>, std::vector<std::vector<uint32_t>>, GameStateHash> moveMap;
+    std::vector<std::vector<uint32_t>> allMoves;
+    allMoves.reserve(allGameStates.size());
 
     for (uint32_t i = 0; i < allGameStates.size(); ++i) {
-        moveMap.insert({ allGameStates[i], getPossibleNextStates(allGameStates[i], idToPartitionMap, partitionToIdMap, idPieceCounts) });
+        allMoves.push_back(getPossibleNextStates(allGameStates[i], allPartitions, partitionToIdMap, idPieceCounts, gameStateToIndexMap));
     }
 
-    std::unordered_map<std::vector<uint32_t>, BranchResult, GameStateHash> branchResultMap;
-    std::unordered_map<std::vector<uint32_t>, BranchResult, GameStateHash> branchResultMapOddParity;
+    std::vector<BranchResult> allBranchResults = std::vector<BranchResult>(allGameStates.size(), {0});
     for (uint32_t i = 0; i < allGameStates.size(); ++i) {
-        SolunaAlgorithm(allGameStates[i], moveMap, branchResultMap);
+        SolunaAlgorithm(i, allGameStates, allMoves, allBranchResults);
     }
-//    {
-//        uint32_t cc = 0;
-//        for (uint32_t i = 0; i < initialStates.size(); ++i) {
-//            if (branchResultMap[allGameStates[initialStates[i]]].guaranteedWin){
-//                ++cc;
-//                for (uint32_t j = 0; j < allGameStates[initialStates[i]].size(); ++j) {
-//                    for (uint32_t k = 0; k < idToPartitionMap[allGameStates[initialStates[i]][j]].size(); ++k) {
-//                        std::cout << idToPartitionMap[allGameStates[initialStates[i]][j]][k].number << " * " << idToPartitionMap[allGameStates[initialStates[i]][j]][k].count << " ";
-//                    }
-//                    std ::cout << std::endl;
-//                }
-//                std ::cout << std::endl;
-//            }
-//       }
-//       std::cout << cc << std::endl;
-//    }
-    
+
     // TODO fix this copying here!
     state.COLOR_COUNT = COLOR_COUNT;
     state.PIECE_COUNT = PIECE_COUNT;
     state.allGameStates = allGameStates;
-    state.branchResultMap = branchResultMap;
+    state.allBranchResults = allBranchResults;
     state.initialStates = initialStates;
-    state.idToPartitionMap = idToPartitionMap;
-    state.moveMap = moveMap;
+    state.allPartitions = allPartitions;
+    state.allMoves = allMoves;
 }
 
 // API of webassembly
@@ -509,30 +498,29 @@ bool calculateAllGameStates(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
 }
 
 PieceStack * getPartition(uint32_t id) {
-    return state.idToPartitionMap[id].data();
+    return state.allPartitions[id].data();
 }
 uint32_t getPartitionCount(uint32_t id){
-    return (uint32_t)state.idToPartitionMap[id].size();
+    return (uint32_t)state.allPartitions[id].size();
 }
 
 uint32_t * getGameState(uint32_t index) {
     return state.allGameStates[index].data();
 }
-
 uint32_t getGameStateCount(uint32_t index) {
     return (uint32_t)state.allGameStates[index].size();
 }
 
 uint32_t getBoardNextPossibleMovesCount(uint32_t index){
-    return (uint32_t)state.moveMap[state.allGameStates[index]].size();
+    return (uint32_t)state.allMoves[index].size();
 }
-std::vector<uint32_t> * getBoardNextPossibleMoves(uint32_t index) {
-     return state.moveMap[state.allGameStates[index]].data();
+uint32_t * getBoardNextPossibleMoves(uint32_t index) {
+     return state.allMoves[index].data();
 }
 
 
 BranchResult * getBoardBranchResult(uint32_t index) {
-    return &state.branchResultMap[state.allGameStates[index]];
+    return &state.allBranchResults[index];
 }
 
 uint32_t * getInitialStates() {
@@ -541,18 +529,6 @@ uint32_t * getInitialStates() {
 uint32_t getInitialStatesCount() {
     return (uint32_t)state.initialStates.size();
 }
-//uint32 * getPartition(uint32_t partitionIndex) {
-//     return state.
-//}
-//uint32 * getPartitionCount(uint32_t partitionIndex) {
-//
-//}
-
-
-//uint32_t  getInitialStates() {
-//    if (index >= state.allGameStates.size()) return 0;
-//    return (uint32_t)state.allGameStates[index].size();
-//}
 
 #ifdef __cplusplus
 }

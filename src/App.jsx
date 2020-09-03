@@ -9,11 +9,14 @@ const pieceSystem = initThree(document.body);
 const App = () => {
     const [state, setState] = React.useState({});
 
-    Interopt.onLoad(() => setState({}));
+    Interopt.onLoad(() => {
+        setState({});
+        console.log(Interopt.getNextPossibleMoves(0));
+    });
 
     return  <MainPage
         initialGames={Interopt.isLoaded() ? Interopt.getInitialState() : []}
-        onSelect={(gameState) => {console.log("dd"); pieceSystem.setState(4, gameState);}}
+        onSelect={(gameState) => { pieceSystem.setState(4, gameState);}}
     />
 }
 
