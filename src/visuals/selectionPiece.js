@@ -87,7 +87,6 @@ export class SelectionPiece extends Object3D {
             writeStencil.position.copy(piece.position);
             //  writeStencil.scale.multiplyScalar(0.0001)
             writeStencil.renderOrder = 1;
-            writeStencil.ignorePick = true;
 
             const writeStencilLabel = new Mesh(piece.label.geometry,  this.writeMat);
             writeStencil.attach(writeStencilLabel);
@@ -95,7 +94,6 @@ export class SelectionPiece extends Object3D {
             writeStencilLabel.quaternion.copy(piece.label.quaternion);
             writeStencilLabel.position.copy(piece.label.position);
             writeStencilLabel.renderOrder = 1;
-            writeStencilLabel.ignorePick = true;
             
             this.attach(writeStencil);
         }
@@ -105,7 +103,6 @@ export class SelectionPiece extends Object3D {
             readStencil.quaternion.copy(piece.quaternion);
             readStencil.position.copy(piece.position);
             readStencil.renderOrder = 2;
-            readStencil.ignorePick = true;
 
             const readStencilLabel = new Mesh(piece.label.geometry,  this.readMat);
             readStencil.attach(readStencilLabel);
@@ -113,7 +110,6 @@ export class SelectionPiece extends Object3D {
             readStencilLabel.quaternion.copy(piece.label.quaternion);
             readStencilLabel.position.copy(piece.label.position );
             readStencilLabel.renderOrder = 2;
-            readStencilLabel.ignorePick = true;
 
             this.attach(readStencil);
         }   

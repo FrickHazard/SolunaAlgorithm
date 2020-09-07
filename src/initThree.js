@@ -23,15 +23,12 @@ import {
     Font
 } from 'three';
 // for gpu picker
-import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 import { Pillar} from './visuals/pillar';
 import { Skybox } from './visuals/skybox';
 import { PieceSystem } from './PieceSystem';
-import {SelectionPiece} from './visuals/selectionPiece';
-
-import { GPUPicker } from 'three_gpu_picking';
+import SelectionSystem from './SelectionSystem';
 
 export const initThree = (domElement) => {
     const rect = domElement.getBoundingClientRect();
@@ -43,9 +40,10 @@ export const initThree = (domElement) => {
     const renderer = new WebGLRenderer();
 
     renderer.setSize( window.innerWidth, window.innerHeight);
-    domElement.appendChild(renderer.domElement);
 
-    const gpuPicker = new GPUPicker(THREE, renderer, scene, camera);   
+    SelectionSystem.init(renderer, scene, camera);
+
+    domElement.appendChild(renderer.domElement);
 
     const controls = new OrbitControls( camera, renderer.domElement );
     // 26 = radius of piller + 1
@@ -80,15 +78,6 @@ export const initThree = (domElement) => {
  
     const pieceSystem = new PieceSystem();
     scene.add(pieceSystem.group);
-    
-    window.onclick = (ev) => {
-        const objectId = gpuPicker.pick(ev.clientX / renderer.getPixelRatio(), ev.clientY / renderer.getPixelRatio(), (obj3d) => {        
-            return !(obj3d.ignorePick);
-        });
-        if (pieceSystem.pieceMap.has(objectId)) {
-            pieceSystem.selectPiece(objectId);
-        }
-    };
 
     // animate
     const animate = function () {
@@ -100,6 +89,4 @@ export const initThree = (domElement) => {
     };
 
     animate();
-
-    return pieceSystem;
 };

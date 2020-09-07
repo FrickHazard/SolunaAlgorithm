@@ -27,6 +27,9 @@ import normal from "./assets/White_Marble_004_SD/White_Marble_004_NORM.jpg";
 import ambientOcclusion from "./assets/White_Marble_004_SD/White_Marble_004_OCC.jpg";
 import rough from "./assets/White_Marble_004_SD/White_Marble_004_ROUGH.jpg";
 import { SelectionPiece } from './visuals/selectionPiece';
+import GameState from './GameState';
+import SelectionSystem from './SelectionSystem';
+import gameState from './GameState';
 
 const textureLoader = new TextureLoader();
 const diffuseMap = textureLoader.load(diffuse);
@@ -39,16 +42,107 @@ const cylinderGeo = new CylinderGeometry(2, 2, 1, 32, 8);
 cylinderGeo.translate(0, 0.5, 0);
 cylinderGeo.computeVertexNormals();
 
+
+class PieceHighlightSubystem {
+    constructor() {
+        this.ignoreSubscriptions = [];
+        this.group = new Group();
+    }
+    clear() {
+        this.ignoreSubscriptions.forEach(f => f());
+        this.group.children = [];
+    }
+    setSelectionVisuals(params, pieceVisualMap) {        
+        this.clear();    
+        if (!params) return;
+
+        const [[selectedPieceColorIndex, selectedPiecePartitionIndex, selectedSubPartitionIndex], availableMoveIds] = params;
+
+        for (const [colorIndex, partitionMap] of pieceVisualMap) {
+            for(const [partitionIndex, subPartitionMap] of partitionMap) {     
+                for(const [subPartitionIndex, pieceVisual] of subPartitionMap) {     
+                    if (
+                        selectedPieceColorIndex === colorIndex
+                        && selectedPiecePartitionIndex === partitionIndex
+                        && selectedSubPartitionIndex === subPartitionIndex
+                    ) {
+                        const selectedPieceVisual = new SelectionPiece(new Color(0xff00ff));
+                        selectedPieceVisual.setFromPiece(pieceVisual);
+                        this.group.add(selectedPieceVisual);
+                        this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[0]));
+                        this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[1]));  
+                    }
+                    else if (availableMoveIds.find(pair => pair[0] === colorIndex && pair[1] === partitionIndex)) {
+                        const selectedPieceVisual = new SelectionPiece(new Color(0x00ff00));
+                        selectedPieceVisual.setFromPiece(pieceVisual);
+                        this.group.add(selectedPieceVisual);
+                        this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[0]));
+                        this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[1]));
+                    }
+                }
+            }
+        }
+
+    }
+}
+
 export class PieceSystem {
     constructor() {
+        this.highlightSystem = new PieceHighlightSubystem();
         this.group  = new Group();   
         this.pieceMap = new Map();
-        this.selectionGroup = new Group();
+        this.subscriptions = [];
+        GameState.activeGameIndex.subscribe((st) => this.setState(st));
+        GameState.selectedPieceIndex.subscribe((st) => this.highlightSystem.setSelectionVisuals(st, this.pieceMap));
+        GameState.selectedPieceIndex.subscribe((st) => this.resetSubs(st));
+        {
+            this.piecePositions = [];
+            const ratio = 50 /4;
+            for (let x = 3; x < ratio - 2; ++x) {
+                for (let y = 3; y < ratio - 2; ++y){
+                    if ((x + y) % 2 == 0) continue;
+                    this.piecePositions.push(new Vector2((x - (ratio / 2)) * 4 - 1, (y - (ratio /2)) * 4 - 1)); 
+                }
+            }
+            this.piecePositions.sort(() => Math.random() - 0.5);
+        }
     }
+    resetSubs(params) {    
+        this.subscriptions.forEach(f => f());
+        this.subscriptions = [];
+        if (!params) {            
+            for (const [colorIndex,partitionMap] of this.pieceMap) {
+                for (const [partitionIndex, subPartitionMap] of partitionMap ) {
+                    for (const [k, pieceVisual] of subPartitionMap ) {
+                        this.subscriptions.push(SelectionSystem.subscribeToSelect(pieceVisual, () => GameState.setSelectedPieceIndex([colorIndex, partitionIndex, k])));
+                    }   
+                }
+            }
+            return;
+        }
 
-    setState(colorCount, gameState) {
+        const [[selectedPieceColorIndex, selectedPiecePartitionIndex, selectedSubPartitionIndex], availableMoveIds] = params;
+
+        for (const [colorIndex,partitionMap] of this.pieceMap) {
+            for (const [partitionIndex, subPartitionMap] of partitionMap ) {
+                for (const [k, pieceVisual] of subPartitionMap ) {
+                    if ((
+                        selectedPieceColorIndex === colorIndex
+                        && selectedPiecePartitionIndex === partitionIndex
+                        && k === selectedSubPartitionIndex)
+                        ||  availableMoveIds.find(pair => pair[0] === colorIndex && pair[1] === partitionIndex)                   
+                    ) {
+                        this.subscriptions.push(SelectionSystem.subscribeToSelect(pieceVisual,
+                            () => GameState.setSelectedPieceIndex([colorIndex, partitionIndex, k])));
+                    }
+                }   
+            }
+        }
+    }
+    setState([gameIndex, gameState]) {    
+        this.subscriptions.forEach(x => x());
         this.group.children = [];
-        this.group.add(this.selectionGroup);
+        this.group.add(this.highlightSystem.group);
 
         this.labelMaterial = new MeshStandardMaterial({
             color: 0xff5f00,
@@ -68,7 +162,7 @@ export class PieceSystem {
             // roughnessMap,   
         });
 
-        for (let i = 1; i <= colorCount; i++) {
+        for (let i = 1; i <= gameState.length; i++) {
             this.labelGeometries.push(new TextGeometry(i.toString(), {
                 font: new Font(helevetikerFont),
                 size: 1.5,
@@ -79,24 +173,12 @@ export class PieceSystem {
             this.labelGeometries[i-1].computeBoundingBox();
             this.labelGeometries[i-1].center();
         }
-
-        {
-            this.piecePositions = [];
-            const ratio = 50 /4;
-            for (let x = 3; x < ratio - 2; ++x) {
-                for (let y = 3; y < ratio - 2; ++y){
-                    if ((x + y) % 2 == 0) continue;
-                    this.piecePositions.push(new Vector2((x - (ratio / 2)) * 4 - 1, (y - (ratio /2)) * 4 - 1)); 
-                }
-            }
-            this.piecePositions.sort(() => Math.random() - 0.5);
-        }
             
         this.pieceMap = new Map();    
-
         let i = 0;
         let colorIndex = 0;
         for (const partition of gameState) {
+            let partitionNumbIndex = 0;
             for (const partitionNumb of partition) {
                 for (let k = 0; k < partitionNumb.count; ++k) {                
                     const piece = new Piece({
@@ -106,32 +188,28 @@ export class PieceSystem {
                         labelGeometry: this.labelGeometries[colorIndex],
                         height: partitionNumb.number
                     });
-                    this.pieceMap.set(piece.id, [colorIndex, partitionNumb, piece]);
-                    this.group.add(piece);                
+                    // TODO hack because messy closure, fix later
+                    let c = colorIndex;
+                    let p = partitionNumbIndex;
+
+                    this.subscriptions.push(SelectionSystem.subscribeToSelect(piece, () => GameState.setSelectedPieceIndex([c, p, k])));
+                    if (!this.pieceMap.has(colorIndex)) {
+                        this.pieceMap.set(colorIndex, new Map([[partitionNumbIndex, new Map([[k, piece]])]]));
+                    } else {
+                        if (!this.pieceMap.get(colorIndex).has(partitionNumbIndex)) {
+                            this.pieceMap.get(colorIndex).set(partitionNumbIndex, new Map([[k, piece]]));
+                        }
+                        else {
+                            this.pieceMap.get(colorIndex).get(partitionNumbIndex).set(k, piece);
+                        }                       
+                    }                
+                    this.group.add(piece);     
                     piece.setPostition(this.piecePositions[i], 0);
                     i++;
                 }
-            }
+                ++partitionNumbIndex;
+            }  
             ++colorIndex;
-        }
-    }
-
-    selectPiece (id) {  
-        this.selectionGroup .children = [];    
-        const [selectedColorIndex, selectedPartitionNumb, selectedPieceVisual] = this.pieceMap.get(id);
-
-        for (const pair of this.pieceMap) {
-            const [pieceId, [colorIndex, partitionNumb, pieceVisual]] = pair;         
-            if (pieceId === id) {
-                const selectedPieceVisual = new SelectionPiece(new Color(0xff00ff));
-                selectedPieceVisual.setFromPiece(pieceVisual);
-                this.selectionGroup.add(selectedPieceVisual);
-            }
-            else if (partitionNumb.number === selectedPartitionNumb.number || colorIndex === selectedColorIndex) {
-                const selectedPieceVisual = new SelectionPiece(new Color(0x00ff00));
-                selectedPieceVisual.setFromPiece(pieceVisual);
-                this.selectionGroup.add(selectedPieceVisual);
-            }
         }
     }
 }

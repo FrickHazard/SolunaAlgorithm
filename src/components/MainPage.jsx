@@ -1,8 +1,12 @@
 import React from 'react';
+import GameState, { useStateEffect } from '../GameState';
 
 export const MainPage = (props) => {
 
-    const [state, setState] = React.useState({ hidden: false });
+    const [hidden, setHidden] = React.useState({ hidden: false });
+    const [initialGameStates, setInitialGameStates] = React.useState([]);
+
+    useStateEffect(GameState.initialGamesIndices.subscribe(setInitialGameStates));
 
     return <div style={{
         width: '100%',
@@ -16,7 +20,7 @@ export const MainPage = (props) => {
         pointerEvents: 'none'
     }}>  
         {
-            !state.hidden ? <div style={{ maxHeight: '80%', padding: 8, background: 'white', pointerEvents:'auto', overflowY: 'auto'}}>
+            !hidden.hidden ? <div style={{ maxHeight: '80%', padding: 8, background: 'white', pointerEvents:'auto', overflowY: 'auto'}}>
                 <div>
                     <button>Play Soluna</button>
                 </div>
@@ -27,7 +31,12 @@ export const MainPage = (props) => {
                     <p>Initial Conditions</p>
                 </div>
                 <ol style={{overflow: 'scroll' }}>
-                    {props.initialGames.map((gameState, i) => (<li key={i} onClick={() => { setState({hidden: true }); props.onSelect(gameState); }}>
+                    {initialGameStates.map(([gameIndex, gameState]) => (<li key={gameIndex}
+                            onClick={() => { 
+                                setHidden({hidden: true });
+                                GameState.setActiveGameIndex(gameIndex);
+                            }}
+                        >
                         {gameState.map((partitions, i) =><div key={i} style={{display: 'inline'}}>
                             {partitions.map((partition, i) =>
                                 <p key={i} style={{display: 'inline'}}>

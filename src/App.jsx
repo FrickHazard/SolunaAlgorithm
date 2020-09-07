@@ -3,21 +3,16 @@ import React from "react"
 import Interopt from "./interopt"
 import { MainPage } from './components/MainPage.jsx';
 import { initThree } from './initThree';
+import GameState from './GameState';
 
-const pieceSystem = initThree(document.body);
+initThree(document.body);
+
+Interopt.onLoad(() => {
+    GameState.setInitialGameStateIndices();
+});
 
 const App = () => {
-    const [state, setState] = React.useState({});
-
-    Interopt.onLoad(() => {
-        setState({});
-        console.log(Interopt.getNextPossibleMoves(0));
-    });
-
-    return  <MainPage
-        initialGames={Interopt.isLoaded() ? Interopt.getInitialState() : []}
-        onSelect={(gameState) => { pieceSystem.setState(4, gameState);}}
-    />
+    return  <MainPage/>
 }
 
 const wrapper = document.getElementById("container");

@@ -27,20 +27,15 @@ const interopt =   {
         _callback = () => { self.init(); callback() };
     },
 
-    getInitialState() {
+    getInitialStates() {
         const count = Module._getInitialStatesCount();
         const ptr = Module._getInitialStates();
         const initialGameStates = new Uint32Array(Module.HEAP32.buffer, ptr, count);
 
         const result = [];
-        for (const gameIndex of initialGameStates) {
-            const gameState = this.getGameState(gameIndex);
-            result.push([]);
-            for (const partitionId of gameState) {                
-                result[result.length - 1].push(this.getPartition(partitionId));
-            }
+        for (const gameIndex of initialGameStates) {            
+            result.push([gameIndex, this.getGameStateExpandedToPartitions(gameIndex)]);          
         }
-
         return result;
     },
 
@@ -56,6 +51,15 @@ const interopt =   {
         return branchResult;
     },
 
+    getGameStateExpandedToPartitions(gameIndex){
+        const result = [];
+        const gameState = this.getGameState(gameIndex);
+        for (const partitionId of gameState) {                
+            result.push(this.getPartition(partitionId));
+        }
+        return result;
+    },
+
     getGameState(gameIndex) {
         const gamePtr = Module._getGameState(gameIndex);
         const gameCount = Module._getGameStateCount(gameIndex);
@@ -63,14 +67,14 @@ const interopt =   {
         return gameState;
     },
 
-    getNextPossibleMoves(gameIndex) {
+    getNextPossibleGameStateIndices(gameIndex) {
         // wasm ptr = 4 bytes
         const result = [];
         const gameStatesPtr = Module._getBoardNextPossibleMoves(gameIndex);
         const gameStatesCount = Module._getBoardNextPossibleMovesCount(gameIndex);
         for  (let i = 0; i < gameStatesCount; ++i) {
-            const gameStateIndex = new Uint32Array(Module.HEAP32.buffer, gameStatesPtr + (i * 4) , 1);           
-            result.push(this.getGameState(gameStateIndex));
+            const gameStateIndex = new Uint32Array(Module.HEAP32.buffer, gameStatesPtr + (i * 4) , 1)[0];           
+            result.push(gameStateIndex);
         }
         return result;
     },
