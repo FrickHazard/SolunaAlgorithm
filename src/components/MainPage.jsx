@@ -34,7 +34,7 @@ export const MainPage = (props) => {
                     {initialGameStates.map(([gameIndex, gameState]) => (<li key={gameIndex}
                             onClick={() => { 
                                 setHidden({hidden: true });
-                                GameState.setActiveGameIndex(gameIndex);
+                                GameState.resetBoard(gameIndex);
                             }}
                         >
                         {gameState.map((partitions, i) =><div key={i} style={{display: 'inline'}}>

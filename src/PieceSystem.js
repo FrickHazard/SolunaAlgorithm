@@ -52,49 +52,46 @@ class PieceHighlightSubystem {
         this.ignoreSubscriptions.forEach(f => f());
         this.group.children = [];
     }
-    setSelectionVisuals(params, pieceVisualMap) {        
+    setSelectionVisuals(params, pieceVisuals) {        
         this.clear();    
         if (!params) return;
 
         const [[selectedPieceColorIndex, selectedPiecePartitionIndex, selectedSubPartitionIndex], availableMoveIds] = params;
 
-        for (const [colorIndex, partitionMap] of pieceVisualMap) {
-            for(const [partitionIndex, subPartitionMap] of partitionMap) {     
-                for(const [subPartitionIndex, pieceVisual] of subPartitionMap) {     
-                    if (
-                        selectedPieceColorIndex === colorIndex
-                        && selectedPiecePartitionIndex === partitionIndex
-                        && selectedSubPartitionIndex === subPartitionIndex
-                    ) {
-                        const selectedPieceVisual = new SelectionPiece(new Color(0xff00ff));
-                        selectedPieceVisual.setFromPiece(pieceVisual);
-                        this.group.add(selectedPieceVisual);
-                        this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[0]));
-                        this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[1]));  
-                    }
-                    else if (availableMoveIds.find(pair => pair[0] === colorIndex && pair[1] === partitionIndex)) {
-                        const selectedPieceVisual = new SelectionPiece(new Color(0x00ff00));
-                        selectedPieceVisual.setFromPiece(pieceVisual);
-                        this.group.add(selectedPieceVisual);
-                        this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[0]));
-                        this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[1]));
-                    }
-                }
+        for (const pieceVisual of pieceVisuals) {  
+            const [colorIndex, partitionIndex, subPartitionIndex] = pieceVisual.userData.indices;
+            if (
+                selectedPieceColorIndex === colorIndex
+                && selectedPiecePartitionIndex === partitionIndex
+                && selectedSubPartitionIndex === subPartitionIndex
+            ) {
+                const selectedPieceVisual = new SelectionPiece(new Color(0xff00ff));
+                selectedPieceVisual.setFromPiece(pieceVisual);
+                this.group.add(selectedPieceVisual);
+                this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[0]));
+                this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[1]));  
+            }
+            else if (availableMoveIds.find(pair => pair[0] === colorIndex && pair[1] === partitionIndex)) {
+                const selectedPieceVisual = new SelectionPiece(new Color(0x00ff00));
+                selectedPieceVisual.setFromPiece(pieceVisual);
+                this.group.add(selectedPieceVisual);
+                this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[0]));
+                this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[1]));
             }
         }
-
-    }
+    }    
 }
 
 export class PieceSystem {
     constructor() {
         this.highlightSystem = new PieceHighlightSubystem();
-        this.group  = new Group();   
-        this.pieceMap = new Map();
+        this.group  = new Group();
+        this.pieceVisuals = [];
         this.subscriptions = [];
-        GameState.activeGameIndex.subscribe((st) => this.setState(st));
-        GameState.selectedPieceIndex.subscribe((st) => this.highlightSystem.setSelectionVisuals(st, this.pieceMap));
-        GameState.selectedPieceIndex.subscribe((st) => this.resetSubs(st));
+        GameState.resetBoardUpdate.subscribe((st) => this.resetBoard(st));
+        GameState.moveUpdate.subscribe(this.applyMove.bind(this));
+        GameState.selectedPieceIndex.subscribe((st) => this.highlightSystem.setSelectionVisuals(st, this.pieceVisuals));
+        GameState.selectedPieceIndex.subscribe((st) => this.resetSubs(st));        
         {
             this.piecePositions = [];
             const ratio = 50 /4;
@@ -111,35 +108,29 @@ export class PieceSystem {
         this.subscriptions.forEach(f => f());
         this.subscriptions = [];
         if (!params) {            
-            for (const [colorIndex,partitionMap] of this.pieceMap) {
-                for (const [partitionIndex, subPartitionMap] of partitionMap ) {
-                    for (const [k, pieceVisual] of subPartitionMap ) {
-                        this.subscriptions.push(SelectionSystem.subscribeToSelect(pieceVisual, () => GameState.setSelectedPieceIndex([colorIndex, partitionIndex, k])));
-                    }   
-                }
+            for (const pieceVisual of this.pieceVisuals) {
+                this.subscriptions.push(SelectionSystem.subscribeToSelect(pieceVisual,
+                    () => GameState.setSelectedPieceIndex(pieceVisual.userData.indices)));
             }
             return;
         }
 
         const [[selectedPieceColorIndex, selectedPiecePartitionIndex, selectedSubPartitionIndex], availableMoveIds] = params;
 
-        for (const [colorIndex,partitionMap] of this.pieceMap) {
-            for (const [partitionIndex, subPartitionMap] of partitionMap ) {
-                for (const [k, pieceVisual] of subPartitionMap ) {
-                    if ((
-                        selectedPieceColorIndex === colorIndex
-                        && selectedPiecePartitionIndex === partitionIndex
-                        && k === selectedSubPartitionIndex)
-                        ||  availableMoveIds.find(pair => pair[0] === colorIndex && pair[1] === partitionIndex)                   
-                    ) {
-                        this.subscriptions.push(SelectionSystem.subscribeToSelect(pieceVisual,
-                            () => GameState.setSelectedPieceIndex([colorIndex, partitionIndex, k])));
-                    }
-                }   
-            }
+        for (const pieceVisual of this.pieceVisuals) {
+            const [colorIndex, partitionIndex, k] = pieceVisual.userData.indices;
+            if ((
+                selectedPieceColorIndex === colorIndex
+                && selectedPiecePartitionIndex === partitionIndex
+                && selectedSubPartitionIndex === k)
+                ||  availableMoveIds.find(pair => pair[0] === colorIndex && pair[1] === partitionIndex)                   
+            ) {
+                this.subscriptions.push(SelectionSystem.subscribeToSelect(pieceVisual,
+                    () => GameState.setSelectedPieceIndex(pieceVisual.userData.indices)));
+            }                    
         }
     }
-    setState([gameIndex, gameState]) {    
+    resetBoard([gameIndex, expandedGameState]) {    
         this.subscriptions.forEach(x => x());
         this.group.children = [];
         this.group.add(this.highlightSystem.group);
@@ -162,7 +153,7 @@ export class PieceSystem {
             // roughnessMap,   
         });
 
-        for (let i = 1; i <= gameState.length; i++) {
+        for (let i = 1; i <= expandedGameState.length; i++) {
             this.labelGeometries.push(new TextGeometry(i.toString(), {
                 font: new Font(helevetikerFont),
                 size: 1.5,
@@ -174,10 +165,10 @@ export class PieceSystem {
             this.labelGeometries[i-1].center();
         }
             
-        this.pieceMap = new Map();    
+        this.pieceVisuals = [];    
         let i = 0;
         let colorIndex = 0;
-        for (const partition of gameState) {
+        for (const partition of expandedGameState) {
             let partitionNumbIndex = 0;
             for (const partitionNumb of partition) {
                 for (let k = 0; k < partitionNumb.count; ++k) {                
@@ -188,28 +179,77 @@ export class PieceSystem {
                         labelGeometry: this.labelGeometries[colorIndex],
                         height: partitionNumb.number
                     });
-                    // TODO hack because messy closure, fix later
-                    let c = colorIndex;
-                    let p = partitionNumbIndex;
-
-                    this.subscriptions.push(SelectionSystem.subscribeToSelect(piece, () => GameState.setSelectedPieceIndex([c, p, k])));
-                    if (!this.pieceMap.has(colorIndex)) {
-                        this.pieceMap.set(colorIndex, new Map([[partitionNumbIndex, new Map([[k, piece]])]]));
-                    } else {
-                        if (!this.pieceMap.get(colorIndex).has(partitionNumbIndex)) {
-                            this.pieceMap.get(colorIndex).set(partitionNumbIndex, new Map([[k, piece]]));
-                        }
-                        else {
-                            this.pieceMap.get(colorIndex).get(partitionNumbIndex).set(k, piece);
-                        }                       
-                    }                
+                    piece.userData = {
+                        indices : [colorIndex, partitionNumbIndex, k],
+                        height: partitionNumb.number
+                    };
                     this.group.add(piece);     
                     piece.setPostition(this.piecePositions[i], 0);
+                    this.pieceVisuals.push(piece);
                     i++;
                 }
                 ++partitionNumbIndex;
             }  
             ++colorIndex;
         }
+        this.resetSubs(undefined);
+    }
+    applyMove(topPiece, bottomPiece, expandedGameState, colorMap) {
+        const [topColorIndex, topPartitionIndex, topSubPartitionIndex] = topPiece;
+        const [bottomColorIndex, bottomPartitionIndex, bottomSubPartitionIndex] = bottomPiece;
+        const newPieceVisuals = [];
+
+        let colorIndex = 0;
+        for (const partition of expandedGameState) {
+            let partitionNumbIndex = 0;
+            for (const partitionNumb of partition) {
+                for (let k = 0; k < partitionNumb.count; ++k) {
+                    const pieceVisual = this.pieceVisuals.find(x => 
+                        x.userData.indices[0] === colorMap[colorIndex]
+                        && x.userData.indices[1] === partitionNumbIndex
+                        && x.userData.indices[2] === k              
+                    );                    
+                }
+                ++partitionNumbIndex;
+            }
+            ++colorIndex;
+        }
+
+        // let newHeight = 0;
+        // let bottomVisual;
+
+        // for (const pieceVisual of this.pieceVisuals) {
+        //     const indices = pieceVisual.userData.indices;
+        //     if (
+        //            indices[0] === topColorIndex
+        //         && indices[1] === topPartitionIndex
+        //         && indices[2] === topSubPartitionIndex
+        //     ) newHeight += pieceVisual.userData.height;
+
+        //     else if (
+        //            indices[0] === bottomColorIndex
+        //         && indices[1] === bottomPartitionIndex
+        //         && indices[2] === bottomSubPartitionIndex
+        //     ) {
+        //         newHeight += pieceVisual.userData.height;
+        //         bottomVisual = pieceVisual;
+        //     }
+
+        //     else if (
+        //            indices[0] === bottomColorIndex
+        //         && indices[1] === bottomPartitionIndex
+        //         && indices[2] > bottomSubPartitionIndex
+        //     ) {
+        //         --indices[2];
+        //         newPieceVisuals.push(pieceVisual);
+        //     } else {
+        //         newPieceVisuals.push(pieceVisual);
+        //     }
+        // }
+
+        this.pieceVisuals = newPieceVisuals;
+        this.group.children = [];
+        this.group.add(this.highlightSystem.group);
+        this.group.add(...this.pieceVisuals)
     }
 }
