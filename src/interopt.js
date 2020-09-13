@@ -21,10 +21,15 @@ createModule(settings).then(function(module) {
 
 const interopt =   {
     isLoaded () { return !(Module === undefined);},
-    init () { return   Module._calculateAllGameStates(4, 12); },
+    init (colorCount, pieceCount) {
+        Module._calculateAllGameStates(colorCount, pieceCount);
+        this.COLOR_COUNT = colorCount;
+        this.PIECE_CONT = pieceCount;
+    },
+    
     onLoad(callback) {
        const self = this;
-        _callback = () => { self.init(); callback() };
+        _callback = () => { callback() };
     },
 
     getInitialStates() {

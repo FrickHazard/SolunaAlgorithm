@@ -8,6 +8,7 @@ import GameState from './GameState';
 initThree(document.body);
 
 Interopt.onLoad(() => {
+    Interopt.init(4, 12)
     GameState.setInitialGameStateIndices();
 });
 

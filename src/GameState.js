@@ -33,7 +33,34 @@ class Sub {
     }
 }
 
-// multi set diff
+const mergeColorMap = (colorMap, gameState, newGameState, changes) => {
+    const bucketHash = {};
+    for (let i = 0; i < gameState.length; ++i) {
+        const partitionIndex = gameState[i];
+        if (bucketHash[partitionIndex]) bucketHash[partitionIndex].push(i);
+        else bucketHash[partitionIndex] = [i];     
+    }
+
+    const indexHash = {};
+    for (let i = 0; i < newGameState.length; ++i) {
+        const partitionIndex = gameState[i];
+        if (!bucketHash[partitionIndex]) {
+            indexHash[changes[i]] = i;
+        }
+        else {
+            const bucket = bucketHash[partitionIndex];
+            indexHash[bucket[0]] = i;
+            bucket.shift();
+        }
+    }
+
+    for (const key of Object.keys(colorMap)) {
+        colorMap[key] = indexHash[colorMap[key]];
+    }
+
+    return colorMap;
+}
+
 const getGameStateDiff  = (gameState1, gameState2) => {
     const hash1 = {};
     for (const partitionIndex of gameState1) {
@@ -109,8 +136,8 @@ const applyMoveToPartiton = (toRemove, toAdd, partition) => {
 
 // reconstruct to find which symmetric state we are in
 const getSymmetricChange = (topPiece, bottomPiece, gameStateIndex) => {
-    const [topColorIndex, topPartitionIndex, topSubPartitionIndex] = topPiece;
-    const [bottomColorIndex, bottomPartitionIndex, bottomSubPartitionIndex] = bottomPiece;
+    const [topColorIndex, topHeight] = topPiece;
+    const [bottomColorIndex, bottomHeight] = bottomPiece;
 
     const expandedGameState = Interopt.getGameStateExpandedToPartitions(gameStateIndex);
     const gameState = Interopt.getGameState(gameStateIndex);
@@ -119,8 +146,8 @@ const getSymmetricChange = (topPiece, bottomPiece, gameStateIndex) => {
     if (topColorIndex === bottomColorIndex) {
 
         const updatedPartition = applyMoveToPartiton(
-            [expandedGameState[topColorIndex][topPartitionIndex].number, expandedGameState[bottomColorIndex][bottomPartitionIndex].number],
-            [expandedGameState[topColorIndex][topPartitionIndex].number + expandedGameState[bottomColorIndex][bottomPartitionIndex].number],
+            [topHeight, bottomHeight],
+            [topHeight + bottomHeight],
             Interopt.getPartition(gameState[topColorIndex])
         );
 
@@ -139,13 +166,13 @@ const getSymmetricChange = (topPiece, bottomPiece, gameStateIndex) => {
 
     else {
         const updatedPartitionTop = applyMoveToPartiton(
-            [expandedGameState[topColorIndex][topPartitionIndex].number],
-            [expandedGameState[topColorIndex][topPartitionIndex].number + expandedGameState[bottomColorIndex][bottomPartitionIndex].number],
+            [topHeight],
+            [topHeight + bottomHeight],
             Interopt.getPartition(gameState[topColorIndex])
         );
 
         const updatedPartitionBottom = applyMoveToPartiton(
-            [expandedGameState[bottomColorIndex][bottomPartitionIndex].number],
+            [bottomHeight],
             [],
             Interopt.getPartition(gameState[bottomColorIndex])
         );
@@ -159,7 +186,7 @@ const getSymmetricChange = (topPiece, bottomPiece, gameStateIndex) => {
                 const partition = Interopt.getPartition(diff[0]);
                 if (updatedPartitionBottom.length === 0 && comparePartition(updatedPartitionTop, partition)) {
                     const changes = {};
-                    changes[nextGameState.indexOf(diff[0])] = topColorIndex;
+                    changes[nextGameState.indexOf(diff[0])] = bottomColorIndex;
                     return [nextGameStateIndice, changes];
                 } else if (updatedPartitionTop.length === 0 && comparePartition(updatedPartitionBottom, partition)) {
                     const changes = {};
@@ -185,7 +212,7 @@ const getSymmetricChange = (topPiece, bottomPiece, gameStateIndex) => {
             } else if (
                 comparePartition(updatedPartitionTop, partition2)
                 && comparePartition(updatedPartitionBottom, partition1)
-            ) {
+            ) {            
                 const changes = {};
                 changes[nextGameState.indexOf(diff[1])] = topColorIndex;
                 changes[nextGameState.indexOf(diff[0])] = bottomColorIndex;
@@ -196,14 +223,12 @@ const getSymmetricChange = (topPiece, bottomPiece, gameStateIndex) => {
     }
 }
 
-
-const getGetValidMoveToPiecesNoSymmetry = ([colorIndex, partitionIndex], expandedGameState) => {
+const getGetValidMoveToPiecesNoSymmetry = ([colorIndex, height], expandedGameState) => {
     const result = [];
-    for (let i =0; i < expandedGameState.length; ++i) {
-        for (let j =0; j < expandedGameState[i].length; ++j) {
-            if (colorIndex === i && partitionIndex === j && expandedGameState[i][j].count === 1) continue;
-            if (i === colorIndex || expandedGameState[i][j].number === expandedGameState[colorIndex][partitionIndex].number) {
-                result.push([i, j]);
+    for (let i = 0; i < expandedGameState.length; ++i) {
+        for (let j = 0; j < expandedGameState[i].length; ++j) {
+            if (i === colorIndex || expandedGameState[i][j].number === height) {
+                result.push({ colorIndex: i, height: expandedGameState[i][j].number });
             }
         }
     }
@@ -217,63 +242,53 @@ const gameState = {
     moveUpdate          : new Sub(),
     resetBoardUpdate    : new Sub(),
     colorMap            : new Sub(),
-    //gameBoardPosition   : new Sub(),
-    // colorMap            : new Sub(),
-    setSelectedPieceIndex([colorIndex, partitionIndex, subPartitionIndex]) {
-        if (this.selectedPieceIndex.state !== undefined) {
-            const [currentColorIndex, currentPartitionIndex, currentSubPartitionIndex] = this.selectedPieceIndex.state[0];
-            if (
-                colorIndex === currentColorIndex
-                && partitionIndex === currentPartitionIndex
-                && subPartitionIndex === currentSubPartitionIndex
-            ) {
-                this.selectedPieceIndex.trigger(undefined);
+    setSelectedPiece([colorIndex, height, pieceUuid]) {
+        if (this.selectedPieceIndex.state[0] !== undefined) {
+            const [currentColorIndex, currentHeight, currentPieceUuid] = this.selectedPieceIndex.state[0];
+            if (pieceUuid === currentPieceUuid) {
+                this.selectedPieceIndex.trigger([undefined, undefined, this.colorMap.state]);        
             } else {
-                const res =  getSymmetricChange(this.selectedPieceIndex.state[0], [colorIndex, partitionIndex, subPartitionIndex], this.activeGameIndex.state[0]);
-
-                if (newGameIndex !== undefined) {
+                const res =  getSymmetricChange(this.selectedPieceIndex.state[0], [colorIndex, height, pieceUuid], this.activeGameIndex.state[0]);
+                if (res !== undefined) {                   
                     const [newGameIndex, changes] = res;
-                    const updatedColorMap = { ...this.colorMap.state };
+                    const updatedColorMap = mergeColorMap(this.colorMap.state,
+                        Interopt.getGameState(this.activeGameIndex.state[0]),
+                        Interopt.getGameState(newGameIndex),
+                        changes);
 
-                    for (const key of Object.keys(changes)) {
-                        updatedColorMap[key] = changes[key];
-                    }
-                    this.colorMap.trigger(updatedColorMap);
-                    this.selectedPieceIndex.trigger(undefined); 
-                    this.setActiveGameIndex(newGameIndex);
-                    
-                    this.moveUpdate.trigger(
-                        this.selectedPieceIndex.state[0],
-                        [colorIndex, partitionIndex, subPartitionIndex],
+                    this.colorMap.trigger(updatedColorMap);                                      
+                    this.moveUpdate.trigger([
+                        this.selectedPieceIndex.state[0][2],
+                        pieceUuid,
                         this.activeGameIndex.state[1],
                         updatedColorMap
-                    );
-                }
-                 
+                    ]);
+                    this.setActiveGameIndex(newGameIndex);  
+                    this.selectedPieceIndex.trigger([undefined, undefined, this.colorMap.state]); 
+                } 
             }
         }
         else this.selectedPieceIndex.trigger([
-            [colorIndex, partitionIndex, subPartitionIndex],
-            getGetValidMoveToPiecesNoSymmetry([colorIndex, partitionIndex], this.activeGameIndex.state[1])
+            [colorIndex, height, pieceUuid],
+            getGetValidMoveToPiecesNoSymmetry([colorIndex, height], this.activeGameIndex.state[1]),
+            this.colorMap.state
         ]);
     },
     resetBoard(gameIndex) {
-        this.setActiveGameIndex(gameIndex);
+        this.setActiveGameIndex(gameIndex);       
         this.resetBoardUpdate.trigger(this.activeGameIndex.state);
+        this.selectedPieceIndex.trigger([undefined, undefined, this.colorMap.state]); 
     },
     setActiveGameIndex(gameIndex) {
         this.activeGameIndex.trigger([gameIndex, Interopt.getGameStateExpandedToPartitions(gameIndex)]);
     },
     setInitialGameStateIndices() {
         this.initialGamesIndices.trigger(Interopt.getInitialStates());
-        this.colorMap.trigger({ 0: 0, 1: 1, 2: 2, 3: 3 });
+        const colorMap = {};
+        for (let i = 0; i  < Interopt.COLOR_COUNT; ++i)
+            colorMap[i] = i;
+        this.colorMap.trigger(colorMap);
     }
 };
 
 export default gameState;
-
-// initialGameStatesMap={Interopt.isLoaded() ? Interopt.getInitialStates() : []}
-// onSelect={(gameIndex) => {
-//     const gameStIdx = Interopt.getNextPossibleGameStateIndices(gameIndex)[0];           
-//     pieceSystem.setState(4, Array.from(Interopt.getGameStateExpandedToPartitions(gameStIdx)));
-// }}
