@@ -9,7 +9,7 @@ export const useStateEffect = (...unsubscribeCallbacks) => {
                 unsubscribe();
             }
         };
-    })
+    }, [])
 };
 
 class Sub {
@@ -290,12 +290,12 @@ const gameState = {
             gameStateObject[i] = gameState[i]
 
         this.setActiveGameIndex(gameIndex);
-        this.gameStateObject.trigger(gameStateObject)
+        this.gameStateObject.trigger(gameStateObject);
         this.resetBoardUpdate.trigger(expandPartitons(gameStateObject));
         this.selectedPieceIndex.trigger([undefined, undefined]);
     },
     setActiveGameIndex(gameIndex) {
-        this.activeGameIndex.trigger([gameIndex, Interopt.getGameStateExpandedToPartitions(gameIndex)]);
+        this.activeGameIndex.trigger([gameIndex, Interopt.getGameStateExpandedToPartitions(gameIndex), Interopt.getBranchResult(gameIndex)]);
     },
     setInitialGameStateIndices() {
         this.initialGamesIndices.trigger(Interopt.getInitialStates());

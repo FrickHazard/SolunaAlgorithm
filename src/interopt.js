@@ -3,7 +3,7 @@ import './a.out.wasm';
 
 const settings = {
     locateFile : function(path, prefix) {
-        // if it's a mem init file, use a custom dir        
+        // if it's a mem init file, use a custom dir
         if (path.endsWith(".wasm")) return path;
         // otherwise, use the default, the prefix (JS file's dir) + the path
         return prefix + path;
@@ -26,7 +26,7 @@ const interopt =   {
         this.COLOR_COUNT = colorCount;
         this.PIECE_CONT = pieceCount;
     },
-    
+
     onLoad(callback) {
        const self = this;
         _callback = () => { callback() };
@@ -38,15 +38,15 @@ const interopt =   {
         const initialGameStates = new Uint32Array(Module.HEAP32.buffer, ptr, count);
 
         const result = [];
-        for (const gameIndex of initialGameStates) {            
-            result.push([gameIndex, this.getGameStateExpandedToPartitions(gameIndex)]);          
+        for (const gameIndex of initialGameStates) {
+            result.push([gameIndex, this.getGameStateExpandedToPartitions(gameIndex)]);
         }
         return result;
     },
 
     getBranchResult(gameIndex) {
         const branchPtr = Module._getBoardBranchResult(gameIndex);
-            
+
         const branchResult = {
             leafCount : new Uint32Array(Module.HEAP32.buffer, branchPtr, 1)[0],
             leafVictory: new Uint32Array(Module.HEAP32.buffer, branchPtr + 4, 1)[0],
@@ -59,7 +59,7 @@ const interopt =   {
     getGameStateExpandedToPartitions(gameIndex){
         const result = [];
         const gameState = this.getGameState(gameIndex);
-        for (const partitionId of gameState) {                
+        for (const partitionId of gameState) {
             result.push(this.getPartition(partitionId));
         }
         return result;
@@ -78,7 +78,7 @@ const interopt =   {
         const gameStatesPtr = Module._getBoardNextPossibleMoves(gameIndex);
         const gameStatesCount = Module._getBoardNextPossibleMovesCount(gameIndex);
         for  (let i = 0; i < gameStatesCount; ++i) {
-            const gameStateIndex = new Uint32Array(Module.HEAP32.buffer, gameStatesPtr + (i * 4) , 1)[0];           
+            const gameStateIndex = new Uint32Array(Module.HEAP32.buffer, gameStatesPtr + (i * 4) , 1)[0];
             result.push(gameStateIndex);
         }
         return result;
