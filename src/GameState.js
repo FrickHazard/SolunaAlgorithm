@@ -45,9 +45,14 @@ const expandPartitons = (gameStateObject) => {
 
 const updateGameStateObject = (gameStateObject, topIndex, bottomIndex, changes) => {
     if (changes[gameStateObject[topIndex]] !== undefined) {
+        const oldIndex = gameStateObject[topIndex];
         gameStateObject[topIndex] = changes[gameStateObject[topIndex]]
+        changes[oldIndex] = undefined;
     }
-    else { gameStateObject[topIndex] = undefined; console.error()}
+    else {
+        gameStateObject[topIndex] = undefined;
+        console.error();
+    }
 
     if (topIndex !== bottomIndex && changes[gameStateObject[bottomIndex]] !== undefined) {
         gameStateObject[bottomIndex] = changes[gameStateObject[bottomIndex]]
@@ -180,7 +185,6 @@ const getSymmetricChange = (topPiece, bottomPiece, sameIndex, gameStateIndex) =>
         for (const nextGameStateIndice of nextPossibleGameStateIndices) {
             const nextGameState = Interopt.getGameState(nextGameStateIndice);
             const diff = getGameStateDiff(gameState, nextGameState);
-
             // handle case when a color is effectively eliminated
             if (diff.length === 1 && (updatedPartitionBottom.length === 0 || updatedPartitionTop.length === 0)) {
                 const partition = Interopt.getPartition(diff[0]);
@@ -261,6 +265,8 @@ const gameState = {
                         currentColorIndex,
                         colorIndex,
                         changes);
+
+                    console.log(this.gameStateObject.state, changes, newGameStateObject)
 
                     this.gameStateObject.trigger(newGameStateObject);
                     this.moveUpdate.trigger([

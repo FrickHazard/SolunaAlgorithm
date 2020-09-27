@@ -27,6 +27,7 @@ struct BranchResult {
     uint32_t leafCount;
     uint32_t leafVictory;
     bool guaranteedWin;
+    uint32_t flipMoveCount;
 } typedef BranchResult;
 struct GameStateHash {
     size_t operator()(const std::vector<uint32_t>& gameState) const {
@@ -399,22 +400,28 @@ BranchResult SolunaAlgorithm
         return { 1, 0, false };
     }
     
-    BranchResult result = { 0, 0, false };
+    BranchResult result = { 0, 0, false, false };
 
+    uint32_t guaranteedWinChildrenCount = 0;
+    
     for (uint32_t i =0; i < moveStateIndices.size(); i++) {
         const BranchResult branchResult = SolunaAlgorithm(moveStateIndices[i], allGameStates, allMoves, allBranchResults);
 
         if (!branchResult.guaranteedWin) {
             result.guaranteedWin = true;
+            ++guaranteedWinChildrenCount;
         }
         
         result.leafCount += branchResult.leafCount;
         result.leafVictory += (branchResult.leafCount - branchResult.leafVictory);
     }
+    
+    
+    result.flipMoveCount = result.guaranteedWin ? ((uint32_t)moveStateIndices.size() - guaranteedWinChildrenCount) : 0;
 
     // choose best path here
 
-    allBranchResults[i] = result;;
+    allBranchResults[i] = result;
     
     return result;
 }
@@ -536,5 +543,13 @@ uint32_t getInitialStatesCount() {
 
 //int main() {
 //    calculateAllGameStates(4, 12);
+//   
+//    uint32_t moveCount = 0;
+//    uint32_t c = 0;
+//    for (uint32_t i = 0; i < state.allBranchResults.size(); ++i) {
+//        moveCount += (uint32_t)state.allMoves[i].size();
+//        c += (uint32_t)state.allBranchResults[i].flipMoveCount;
+//    }
+//    
 //    return 0;
 //}
