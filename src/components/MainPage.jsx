@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
 import GameState, { useStateEffect } from '../GameState';
 
+const WhiteText = ({ children, style }) => {
+    return <p style={{...style, color: 'white'}}>{children}</p>
+}
+
+const panelColor = '#666699';
+
 export const MainPage = (props) => {
 
-    const [hidden, setHidden] = useState({ hidden: false });
+    const [menuState, setMenuState] = useState(GameState.menu.state)
     const [initialGameStates, setInitialGameStates] = useState([]);
     const [activeGameIndex, setActiveGameIndex] = useState(GameState.activeGameIndex.state);
+    const [p1sTurn, setP1sTurn] = useState(GameState.p1sTurn.state)
 
     useStateEffect(GameState.activeGameIndex.subscribe(setActiveGameIndex))
     useStateEffect(GameState.initialGamesIndices.subscribe(setInitialGameStates));
+    useStateEffect(GameState.menu.subscribe(setMenuState));
+    useStateEffect(GameState.p1sTurn.subscribe(setP1sTurn));
 
     return <div style={{
         width: '100%',
@@ -22,48 +31,99 @@ export const MainPage = (props) => {
         pointerEvents: 'none'
     }}>
         {
-            !hidden.hidden ? <div style={{ maxHeight: '80%', padding: 8, background: 'white', pointerEvents:'auto', overflowY: 'auto'}}>
-                <div>
-                    <button>Play Soluna</button>
-                </div>
-                <div>
-                    <p>Explore Soluna Board Space</p>
-                </div>
-                <div>
-                    <p>Initial Conditions</p>
-                </div>
-                <ol style={{overflow: 'scroll' }}>
-                    {initialGameStates.map(([gameIndex, gameState]) => (<li key={gameIndex}
+            menuState === 'initial-conditions' || menuState === 'first-or-last'
+            ? <div
+                style={{
+                    maxHeight: '80%',
+                    padding: 8,
+                    backgroundColor: panelColor,
+                    pointerEvents:'auto',
+                    overflowY: 'auto',
+                    borderWidth: '1px',
+                    boxShadow: '4px',
+                    borderRadius: '2%',
+                    padding: '0px 20px'
+                }}>
+                {
+                    menuState === 'initial-conditions'
+                    ? <>
+                    <div>
+                        <WhiteText>Select Initial Conditions</WhiteText>
+                    </div>
+                    <ol style={{overflow: 'scroll', padding: 0 }}>
+                        {initialGameStates.map(([gameIndex, gameState], listIndex) => (
+                        <li key={gameIndex}
+                            style={{ flexDirection: 'row', display: 'flex' }}
                             onClick={() => {
-                                setHidden({hidden: true });
+                                GameState.menuSetState('first-or-last');
                                 GameState.resetBoard(gameIndex);
-                            }}
-                        >
-                        {gameState.map((partitions, i) =><div key={i} style={{display: 'inline'}}>
-                            {partitions.map((partition, i) =>
-                                <p key={i} style={{display: 'inline'}}>
-                                    {`Color ${i + 1}: ${partition.number} * ${partition.count}; `}
-                                </p>)
-                            }</div>)
-                        }</li>))
-                    }
-                </ol>
+                            }}>
+                            <div style={{color: 'white', display: 'flex', flexDirection: 'row', fontWeight: 'bold', fontSize: '20px', width: '35px'}}>{listIndex+1}.</div>
+                            {gameState.map((partitions, colorIndex) =><div key={colorIndex} style={{display: 'flex', flexDirection: 'row' }}>
+                                {partitions.map((partition) =>
+                                    {
+                                        const result = [];
+                                        for (let i  = 0; i < partition.count; ++i) {
+                                            if (i === 0 && colorIndex !== 0) result.push(<div key={`${i}+`}style={{color: 'white', display: 'flex', flexDirection: 'row', fontWeight: 'bold', fontSize: '20px' }}>/</div>)
+                                            result.push(<div key={i} style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                display: 'flex',
+                                                flexDirection: 'row',
+                                                backgroundColor: '#666666',
+                                                borderRadius :'50%',
+                                                justifyContent: 'center',
+                                                alignItems:'center'
+                                            }}>
+                                                <p key={i} style={{ color: '#ffff00', display: 'inline'}}>
+                                                {`${colorIndex}`}
+                                            </p>
+                                            </div>)
+                                        }
+                                        return result;
+                                    })
+                                }</div>)
+                            }</li>))
+                        }
+                    </ol>
+                </>
+                :  <>
+                    <div>
+                        <WhiteText>Go first</WhiteText>
+                    </div>
+                    <button onClick={() => {
+                        GameState.startGame({ playerGoesFirst: true })
+                    }}>Yes</button>
+                    <button onClick={() => {
+                        GameState.startGame({ playerGoesFirst: false })
+                    }}>No</button>
+                </>
+            }
             </div>
             : null
         }
         {
-            <div style={{ position: 'absolute', right: 0, bottom: 0 , backgroundColor: '#A8A8A8'}}>
-                <p>{activeGameIndex ? activeGameIndex[0].toString() : ''}</p>
+            <div style={{ position: 'absolute', right: 0, bottom: 0 , backgroundColor: panelColor, borderRadius: '2%',}}>
+                <WhiteText>{activeGameIndex ? activeGameIndex[0].toString() : ''}</WhiteText>
                 {
                     activeGameIndex ? <>
-                        <p>Leaf Count: {activeGameIndex[2].leafCount}</p>
-                        <p>Leaf Victory: {activeGameIndex[2].leafVictory}</p>
-                        <p>Guaranteed Win: {activeGameIndex[2].guaranteedWin.toString()}</p>
+                        <WhiteText>Leaf Count: {activeGameIndex[2].leafCount}</WhiteText>
+                        <WhiteText>Leaf Victory: {activeGameIndex[2].leafVictory}</WhiteText>
+                        <WhiteText>Guaranteed Win: {activeGameIndex[2].guaranteedWin.toString()}</WhiteText>
                     </>
                     : null
                 }
             </div>
         }
-
+        {
+            <div style={{ position: 'absolute', top: 0, left: '50%', backgroundColor: panelColor,   borderRadius: '2%',}}>
+            {
+                p1sTurn === undefined ? null
+                : p1sTurn
+                    ? <WhiteText>Your Turn </WhiteText>
+                    : <WhiteText>Bots Turn</WhiteText>
+            }
+            </div>
+        }
     </div>
 };

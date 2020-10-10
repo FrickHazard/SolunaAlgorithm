@@ -84,23 +84,30 @@ class PieceHighlightSubystem {
 export class PieceSystem {
     constructor() {
         this.highlightSystem = new PieceHighlightSubystem();
-        this.group  = new Group();
+        this.group = new Group();
         this.pieceVisuals = [];
         this.subscriptions = [];
         GameState.resetBoardUpdate.subscribe((st) => this.resetBoard(st));
         GameState.moveUpdate.subscribe(this.applyMove.bind(this));
         GameState.selectedPieceIndex.subscribe((st) => this.highlightSystem.setSelectionVisuals(st, this.pieceVisuals));
         GameState.selectedPieceIndex.subscribe(this.resetSubs.bind(this));
+        GameState.p1sTurn.subscribe(this.clearSubsOnBotTurn.bind(this))
         {
             this.piecePositions = [];
-            const ratio = 50 /4;
+            const ratio = 50 / 4;
             for (let x = 3; x < ratio - 2; ++x) {
-                for (let y = 3; y < ratio - 2; ++y){
+                for (let y = 3; y < ratio - 2; ++y) {
                     if ((x + y) % 2 == 0) continue;
-                    this.piecePositions.push(new Vector2((x - (ratio / 2)) * 4 - 1, (y - (ratio /2)) * 4 - 1));
+                    this.piecePositions.push(new Vector2((x - (ratio / 2)) * 4 - 1, (y - (ratio / 2)) * 4 - 1));
                 }
             }
             this.piecePositions.sort(() => Math.random() - 0.5);
+        }
+    }
+    clearSubsOnBotTurn(p1sTurn) {
+        return;
+        if (!p1sTurn) {
+            this.subscriptions.forEach(f => f());
         }
     }
     resetSubs(params) {
@@ -109,14 +116,14 @@ export class PieceSystem {
         this.subscriptions.forEach(f => f());
         this.subscriptions = [];
 
-        if (!selectionBlock ) {
+        if (!selectionBlock) {
             for (const pieceVisual of this.pieceVisuals) {
                 this.subscriptions.push(SelectionSystem.subscribeToSelect(pieceVisual,
                     () => GameState.setSelectedPiece([pieceVisual.userData.colorIndex, pieceVisual.userData.height, pieceVisual.uuid])));
             }
             return;
         }
-        const [ , , selectedVisualUuid] = selectionBlock;
+        const [, , selectedVisualUuid] = selectionBlock;
         const selectedVisual = this.pieceVisuals.find(x => x.uuid === selectedVisualUuid)
         const colorIndex = selectedVisual.userData.colorIndex;
         const height = selectedVisual.userData.height;
@@ -143,12 +150,12 @@ export class PieceSystem {
             emissive: 0x111111
         });
 
-        this.labelGeometries = { };
+        this.labelGeometries = {};
         const pieceMaterial = new MeshStandardMaterial({
             // color: 0xffffff,
             // emissive: 0x111111,
             map: diffuseMap,
-            color: 0x333333 ,
+            color: 0x333333,
             //roughnessMap: roughnessMap
             // bumpMap,
             normalMap,
@@ -170,7 +177,7 @@ export class PieceSystem {
 
         this.pieceVisuals = [];
         let i = 0;
-        for (const key of  Object.keys(gameStateObj)) {
+        for (const key of Object.keys(gameStateObj)) {
             const colorIndex = Number(key);
             const partition = gameStateObj[key];
             for (const partitionNumb of partition) {
@@ -206,7 +213,7 @@ export class PieceSystem {
         const bottomPieceVisual = this.pieceVisuals.find(x => x.uuid === bottomPieceUuid);
         bottomPieceVisual.setHeight(newHeight);
         bottomPieceVisual.setLabel(this.labelGeometries[topColorIndex], this.labelMaterial);
-        bottomPieceVisual.userData = {colorIndex:topColorIndex, height: newHeight };
+        bottomPieceVisual.userData = { colorIndex: topColorIndex, height: newHeight };
         newPieceVisuals.push(bottomPieceVisual);
 
         for (const key of Object.keys(gameStateObj)) {

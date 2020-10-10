@@ -36,7 +36,7 @@ class Sub {
 
 
 const expandPartitons = (gameStateObject) => {
-    const result = { };
+    const result = {};
     for (const key of Object.keys(gameStateObject)) {
         result[key] = Interopt.getPartition(gameStateObject[key])
     }
@@ -61,7 +61,7 @@ const updateGameStateObject = (gameStateObject, topIndex, bottomIndex, changes) 
     return gameStateObject
 }
 
-const getGameStateDiff  = (gameState1, gameState2) => {
+const getGameStateDiff = (gameState1, gameState2) => {
     const hash1 = {};
     for (const partitionIndex of gameState1) {
         hash1[partitionIndex] = hash1[partitionIndex] ? hash1[partitionIndex] + 1 : 1;
@@ -100,7 +100,7 @@ const applyMoveToPartiton = (toRemove, toAdd, partition) => {
 
     const newPartition = [];
 
-    partition.map(x =>({ ...x })).forEach(partitionNumb => {
+    partition.map(x => ({ ...x })).forEach(partitionNumb => {
 
         for (let i = 0; i < toRemove.length; ++i) {
             const removee = toRemove[i];
@@ -130,7 +130,7 @@ const applyMoveToPartiton = (toRemove, toAdd, partition) => {
             newPartition.push({ number: toAdd[i], count: 1 });
     }
 
-   return newPartition;
+    return newPartition;
 };
 
 // reconstruct to find which symmetric state we are in
@@ -240,19 +240,21 @@ const getGetValidMoveToPiecesNoSymmetry = ([colorIndex, height], expandedGameSta
 }
 
 const gameState = {
-    selectedPieceIndex  : new Sub(),
-    activeGameIndex     : new Sub(),
-    initialGamesIndices : new Sub(),
-    moveUpdate          : new Sub(),
-    resetBoardUpdate    : new Sub(),
-    gameStateObject     : new Sub(),
+    menu: new Sub('initial-conditions'),
+    selectedPieceIndex: new Sub(),
+    activeGameIndex: new Sub(),
+    initialGamesIndices: new Sub(),
+    moveUpdate: new Sub(),
+    resetBoardUpdate: new Sub(),
+    gameStateObject: new Sub(),
+    p1sTurn: new Sub(),
     setSelectedPiece([colorIndex, height, pieceUuid]) {
         if (this.selectedPieceIndex.state[0] !== undefined) {
             const [currentColorIndex, currentHeight, currentPieceUuid] = this.selectedPieceIndex.state[0];
             if (pieceUuid === currentPieceUuid) {
                 this.selectedPieceIndex.trigger([undefined, undefined]);
             } else {
-                const res =  getSymmetricChange(
+                const res = getSymmetricChange(
                     [this.gameStateObject.state[currentColorIndex], currentHeight, currentPieceUuid],
                     [this.gameStateObject.state[colorIndex], height, pieceUuid],
                     (currentColorIndex === colorIndex),
@@ -276,6 +278,7 @@ const gameState = {
                     ]);
                     this.setActiveGameIndex(newGameIndex);
                     this.selectedPieceIndex.trigger([undefined, undefined]);
+                    this.p1sTurn.trigger(!this.p1sTurn.state)
                 }
                 else {
                     console.error('Symmetric changes failed')
@@ -291,8 +294,8 @@ const gameState = {
     resetBoard(gameIndex) {
         const gameState = Array.from(Interopt.getGameState(gameIndex))
 
-        const gameStateObject = { };
-        for (let i = 0; i  < gameState.length; ++i)
+        const gameStateObject = {};
+        for (let i = 0; i < gameState.length; ++i)
             gameStateObject[i] = gameState[i]
 
         this.setActiveGameIndex(gameIndex);
@@ -305,7 +308,63 @@ const gameState = {
     },
     setInitialGameStateIndices() {
         this.initialGamesIndices.trigger(Interopt.getInitialStates());
-    }
+    },
+    menuSetState(st) {
+        this.menu.trigger(st);
+    },
+    startGame({ playerGoesFirst }) {
+        this.menu.trigger('none')
+        this.p1sTurn.trigger(playerGoesFirst)
+    },
+    makeSymmetricMove(newGameIndex) {
+        {
+            const currentGameState = Interopt.getGameState(this.activeGameIndex.state[0])
+            const newGameState = Interopt.getGameState(newGameIndex)
+            const diff = getGameStateDiff(newGameState, currentGameState);
+            // const diff2 = getGameStateDiff(currentGameState, newGameState);
+            if (diff.length === 1) {
+                console.log(diff)
+            }
+            else if (diff.length === 2) {
+                console.log(diff)
+            } else throw Error()
+
+
+            // console.log(currentGameState, newGameState, diff, this.gameStateObject.state)
+
+
+
+            // const swap = (obj) => {
+            //     var ret = {};
+            //     for (var key in Object.keys(obj)) {
+            //         ret[obj[key]] = key;
+            //     }
+            //     return ret;
+            // }
+            // const invertGameStateObject = swap(this.gameStateObject.state)
+            for (const diffKey of diff) {
+                // color index
+                // const colorIndex = invertGameStateObject[diffKey];
+                const partition = Interopt.getPartition(diff)
+
+            }
+
+            return;
+        }
+        const newGameStateObject = updateGameStateObject(
+            { ...this.gameStateObject.state },
+            currentColorIndex,
+            colorIndex,
+            changes);
+
+        this.moveUpdate.trigger([
+            currentPieceUuid,
+            pieceUuid,
+            expandPartitons(newGameStateObject),
+        ]);
+        this.setActiveGameIndex(newGameIndex);
+        this.p1sTurn.trigger(!this.p1sTurn.state)
+    },
 };
 
 export default gameState;
