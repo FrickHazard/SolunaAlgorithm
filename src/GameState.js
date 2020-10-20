@@ -34,6 +34,73 @@ class Sub {
 }
 
 
+const partitionStructToNumb = (partition) => {
+    return partition.reduce((acc, item) => {
+        for (let i = 0; i < item.count; ++i) {
+            acc.push(item.number);
+        }
+        return acc;
+    }, [])
+}
+
+const getDiff = (OMultiSet1, OMultiSet2) => {
+    const group1 = [];
+    const group2 = [];
+    let i = 0;
+    let j = 0;
+    while (i < OMultiSet1.length && j < OMultiSet1.length) {
+        if (OMultiSet1[i] === OMultiSet2[j]) {
+            ++i;
+            ++j;
+        } else if (OMultiSet1[i] > OMultiSet2[j]) {
+            group2.push(OMultiSet2[j]);
+            ++j;
+        } else {
+            group1.push(OMultiSet1[i]);
+            ++i;
+        }
+    }
+
+    if (i < OMultiSet1.length) {
+        for (; i < OMultiSet1.length; ++i)
+            group1.push(OMultiSet1[i]);
+    }
+    else if (j < OMultiSet2.length) {
+        for (; j < OMultiSet2.length; ++j)
+            group2.push(OMultiSet2[j]);
+    }
+
+    return [group1, group2]
+}
+
+const twoSidedPartitionComparison = (partition1, partition2) => {
+    const group1 = [];
+    const group2 = [];
+    let i = 0;
+    let j = 0;
+    // assumption is that the partitions are ordered
+    while (i < partition.length && j < partition2.length) {
+        if (partition1[i].number === partition2[j].number && partition1[i].count === partition2[j].count) {
+            ++i;
+            ++j;
+        } else if (partition1[i].number === partition2[j].number) {
+            if (partition1[i].count > partition2[j].count) {
+                group1.push({ number: partition1[i].number, count: partition1[i].count - partition2[j].count });
+            } else {
+                group2.push({ number: partition1[i].number, count: partition2[j].count - partition1[i].count });
+            }
+            ++i;
+            ++j;
+        } else if (partition1[i].number > partition2[j].number) {
+            group1.push({ ...partition2[j] });
+            ++j;
+        } else {
+            group2.push({ ...partition1[i] });
+            ++i;
+        }
+    }
+    return [group1, group2]
+}
 
 const expandPartitons = (gameStateObject) => {
     const result = {};
@@ -317,53 +384,82 @@ const gameState = {
         this.p1sTurn.trigger(playerGoesFirst)
     },
     makeSymmetricMove(newGameIndex) {
-        {
-            const currentGameState = Interopt.getGameState(this.activeGameIndex.state[0])
-            const newGameState = Interopt.getGameState(newGameIndex)
-            const diff = getGameStateDiff(newGameState, currentGameState);
-            // const diff2 = getGameStateDiff(currentGameState, newGameState);
-            if (diff.length === 1) {
-                console.log(diff)
-            }
-            else if (diff.length === 2) {
-                console.log(diff)
-            } else throw Error()
+        const currentGameState = Interopt.getGameState(this.activeGameIndex.state[0])
+        const newGameState = Interopt.getGameState(newGameIndex)
+        const [currentDiff, nextDiff] = getDiff(currentGameState, newGameState);
+        const sum = (arr) => arr.reduce((acc, item) => acc + item, 0)
+        const [removeObj, addObj] = [{}, {}]
 
+        if (currentDiff.length === 1 && currentDiff.length === nextDiff.length) {
+            const [remove, add] = getDiff(partitionStructToNumb(Interopt.getPartition(currentDiff[0])), partitionStructToNumb(Interopt.getPartition(nextDiff[0])));
+            removeObj[currentDiff[0]] = remove[0]
+            addObj[nextDiff[0]] = add[0]
+        } else if (currentDiff.length === 2 && nextDiff.length === 1) {
+            const arr1 = partitionStructToNumb(Interopt.getPartition(currentDiff[0]));
+            const arr2 = partitionStructToNumb(Interopt.getPartition(currentDiff[1]));
+            const sum1 = sum(arr1)
+            const sum2 = sum(arr2)
+            if (sum2 > sum1) {
+                let [remove, add] = getDiff(arr2, partitionStructToNumb(Interopt.getPartition(nextDiff[0])));
+                removeObj[currentDiff[1]] = remove[0]
+                addObj[nextDiff[0]] = add[0]
 
-            // console.log(currentGameState, newGameState, diff, this.gameStateObject.state)
+                removeObj[currentDiff[0]] = arr1[0]
+            } else {
+                let [remove, add] = getDiff(arr1, partitionStructToNumb(Interopt.getPartition(nextDiff[0])));
+                removeObj[currentDiff[0]] = remove[0]
+                addObj[nextDiff[0]] = add[0]
 
-
-
-            // const swap = (obj) => {
-            //     var ret = {};
-            //     for (var key in Object.keys(obj)) {
-            //         ret[obj[key]] = key;
-            //     }
-            //     return ret;
-            // }
-            // const invertGameStateObject = swap(this.gameStateObject.state)
-            for (const diffKey of diff) {
-                // color index
-                // const colorIndex = invertGameStateObject[diffKey];
-                const partition = Interopt.getPartition(diff)
-
+                removeObj[currentDiff[1]] = arr2[0]
             }
 
-            return;
-        }
-        const newGameStateObject = updateGameStateObject(
-            { ...this.gameStateObject.state },
-            currentColorIndex,
-            colorIndex,
-            changes);
+        } else if (currentDiff.length === 2 && nextDiff.length === 2) {
+            const arrCurr1 = partitionStructToNumb(Interopt.getPartition(currentDiff[0]));
+            const arrCurr2 = partitionStructToNumb(Interopt.getPartition(currentDiff[1]));
+            const arrNext1 = partitionStructToNumb(Interopt.getPartition(nextDiff[0]))
+            const arrNext2 = partitionStructToNumb(Interopt.getPartition(nextDiff[1]))
 
-        this.moveUpdate.trigger([
-            currentPieceUuid,
-            pieceUuid,
-            expandPartitons(newGameStateObject),
-        ]);
-        this.setActiveGameIndex(newGameIndex);
-        this.p1sTurn.trigger(!this.p1sTurn.state)
+            const sum1 = (sum(arrNext1) - sum(arrCurr1))
+            const sum2 = (sum(arrNext2) - sum(arrCurr2))
+
+            let [compRemove, compAdd] = getDiff(arrCurr1, arrNext1);
+
+            if (Math.abs(sum1) > 0 && sum1 === -sum2 && compAdd[0] - compRemove[0] === sum1) {
+                let [remove1, add1] = getDiff(arrCurr1, arrNext1);
+                let [remove2, add2] = getDiff(arrCurr2, arrNext2);
+
+                removeObj[currentDiff[0]] = remove1[0]
+                addObj[nextDiff[0]] = add1[0]
+                removeObj[currentDiff[1]] = remove2[0]
+                addObj[nextDiff[1]] = add2[0]
+            } else {
+                let [remove1, add1] = getDiff(arrCurr1, arrNext2);
+                let [remove2, add2] = getDiff(arrCurr2, arrNext1);
+
+                removeObj[currentDiff[0]] = remove1[0]
+                addObj[nextDiff[1]] = add1[0]
+                removeObj[currentDiff[1]] = remove2[0]
+                addObj[nextDiff[0]] = add2[0]
+            }
+        } else console.error('This should never happen.')
+
+        console.log(removeObj, addObj)
+
+        return;
+
+        // const newGameStateObject = updateGameStateObject(
+        //     { ...this.gameStateObject.state },
+        //     currentColorIndex,
+        //     colorIndex,
+        //     changes);
+
+        // this.moveUpdate.trigger([
+        //     currentPieceUuid,
+        //     pieceUuid,
+        //     expandPartitons(newGameStateObject),
+        // ]);
+        // this.setActiveGameIndex(newGameIndex);
+        // this.p1sTurn.trigger(!this.p1sTurn.state)
     },
 };
 
