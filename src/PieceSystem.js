@@ -1,20 +1,10 @@
 import {
     MeshStandardMaterial,
     Group,
-    TextBufferGeometry,
     Font,
     Vector2,
     TextureLoader,
     Color,
-    ShaderMaterial,
-    Mesh,
-    CylinderBufferGeometry,
-    BackSide,
-    NeverDepth,
-    NotEqualStencilFunc,
-    ReplaceStencilOp,
-    DoubleSide,
-    KeepStencilOp,
     CylinderGeometry,
     TextGeometry,
 } from 'three';
@@ -29,6 +19,10 @@ import rough from "./assets/White_Marble_004_SD/White_Marble_004_ROUGH.jpg";
 import { SelectionPiece } from './visuals/selectionPiece';
 import GameState from './GameState';
 import SelectionSystem from './SelectionSystem';
+
+function isObject(obj) {
+    return obj === Object(obj);
+}
 
 const textureLoader = new TextureLoader();
 const diffuseMap = textureLoader.load(diffuse);
@@ -203,14 +197,29 @@ export class PieceSystem {
     }
 
     applyMove([topPieceUuid, bottomPieceUuid, gameStateObj]) {
+        console.log(gameStateObj)
         const newPieceVisuals = [];
 
-        const newHeight = this.pieceVisuals.find(x => x.uuid === topPieceUuid).userData.height +
-            this.pieceVisuals.find(x => x.uuid === bottomPieceUuid).userData.height;
+        let newHeight
+        let topColorIndex
+        if (isObject(topPieceUuid)) {
+            newHeight = topPieceUuid.height
+            topColorIndex = topPieceUuid.topColorIndex
+        } else {
+            newHeight = this.pieceVisuals.find(x => x.uuid === topPieceUuid).userData.height +
+                this.pieceVisuals.find(x => x.uuid === bottomPieceUuid).userData.height;
 
-        const topColorIndex = this.pieceVisuals.find(x => x.uuid === topPieceUuid).userData.colorIndex;
+            topColorIndex = this.pieceVisuals.find(x => x.uuid === topPieceUuid).userData.colorIndex;
+        }
 
-        const bottomPieceVisual = this.pieceVisuals.find(x => x.uuid === bottomPieceUuid);
+
+        let bottomPieceVisual
+        if (isObject(topPieceUuid)) {
+            bottomPieceVisual = this.pieceVisuals.find(x => x.userData.height === bottomPieceUuid.height && x.userData.colorIndex === bottomPieceUuid.bottomColorIndex);
+        } else {
+            bottomPieceVisual = this.pieceVisuals.find(x => x.uuid === bottomPieceUuid);
+        }
+
         bottomPieceVisual.setHeight(newHeight);
         bottomPieceVisual.setLabel(this.labelGeometries[topColorIndex], this.labelMaterial);
         bottomPieceVisual.userData = { colorIndex: topColorIndex, height: newHeight };
@@ -225,7 +234,8 @@ export class PieceSystem {
                     && x.userData.height === partitionNumb.number);
 
                 for (const pieceVisual of visuals) {
-                    if (pieceVisual.uuid !== topPieceUuid && pieceVisual.uuid !== bottomPieceUuid) {
+                    // implicit ignore wehn topPieceUuid is object
+                    if (pieceVisual.uuid !== topPieceUuid && pieceVisual.uuid !== bottomPieceVisual.uuid) {
                         newPieceVisuals.push(pieceVisual);
                     }
                 }
