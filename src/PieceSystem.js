@@ -197,7 +197,6 @@ export class PieceSystem {
     }
 
     applyMove([topPieceUuid, bottomPieceUuid, gameStateObj]) {
-        console.log(gameStateObj)
         const newPieceVisuals = [];
 
         let newHeight
