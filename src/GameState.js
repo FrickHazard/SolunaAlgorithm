@@ -286,6 +286,7 @@ const gameState = {
     resetBoardUpdate: new Sub(),
     gameStateObject: new Sub(),
     p1sTurn: new Sub(),
+    botMakeNextMove: new Sub(),
     setSelectedPiece([colorIndex, height, pieceUuid]) {
         if (this.selectedPieceIndex.state[0] !== undefined) {
             const [currentColorIndex, currentHeight, currentPieceUuid] = this.selectedPieceIndex.state[0];
@@ -431,26 +432,29 @@ const gameState = {
         const bottomId = {}
         const topId = {}
         const newGameObjectState = (() => {
-
             const newGameStateObject = { ...this.gameStateObject.state }
             const gameStateObjKeyValues = Object.entries(this.gameStateObject.state)
-            let visited = []
-            visited.length = gameStateObjKeyValues.length;
-            visited = visited.map(x => false)
+            const visited = new Array(gameStateObjKeyValues.length).fill(false)
             for (const [key, value] of changeArr) {
                 const keyValueI = gameStateObjKeyValues.findIndex((_keyValue, idx) => _keyValue[1] === Number(key) && !visited[idx])
-                const keyValue = gameStateObjKeyValues[keyValueI]
                 visited[keyValueI] = true
-                newGameStateObject[keyValue[0]] = value
+                const keyValue = gameStateObjKeyValues[keyValueI]
+                if (value !== undefined) {
+                    newGameStateObject[keyValue[0]] = value
+                } else {
+                    delete newGameStateObject[keyValue[0]]
+                }
             }
 
             return newGameStateObject
         })()
 
+        // console.log(newGameObjectState, expandPartitons(newGameObjectState), changeArr, newGameIndex, expandPartitons(Interopt.getGameState(newGameIndex)))
+
         const gameStateObjKeyValues2 = Object.entries(this.gameStateObject.state)
         const gameStateObjKeyValues = Object.entries(newGameObjectState)
         for (const pair of changeArr) {
-            if (pair[1] === undefined) continue
+            if (pair[1] === undefined || addObj[pair[1]] === undefined) continue
             let bottomColorIndex = Number(gameStateObjKeyValues2.find(x => x[1] === Number(pair[0]))[0])
             let topColorIndex = Number(gameStateObjKeyValues.find(x => x[1] === Number(pair[1]))[0])
 
@@ -460,9 +464,8 @@ const gameState = {
             topId.height = addObj[pair[1]]
         }
 
-        //console.log(removeObj, addObj, changeArr, this.gameStateObject.state, newGameObjectState, topId, bottomId)
-        console.log(newGameObjectState)
-
+        console.log(changeArr, addObj)
+        //console.log(newGameObjectState)
 
         this.gameStateObject.trigger(newGameObjectState);
         this.moveUpdate.trigger([

@@ -99,7 +99,7 @@ export class PieceSystem {
         }
     }
     clearSubsOnBotTurn(p1sTurn) {
-        return;
+        this.subscriptions.forEach(f => f());
         if (!p1sTurn) {
             this.subscriptions.forEach(f => f());
         }
@@ -198,7 +198,7 @@ export class PieceSystem {
 
     applyMove([topPieceUuid, bottomPieceUuid, gameStateObj]) {
         const newPieceVisuals = [];
-
+        console.log(gameStateObj)
         let newHeight
         let topColorIndex
         if (isObject(topPieceUuid)) {
@@ -230,10 +230,9 @@ export class PieceSystem {
             for (const partitionNumb of partition) {
                 const visuals = this.pieceVisuals.filter(x =>
                     x.userData.colorIndex === colorIndex
-                    && x.userData.height === partitionNumb.number);
+                    && x.userData.height === partitionNumb.number).slice(0, partitionNumb.count);
 
                 for (const pieceVisual of visuals) {
-                    // implicit ignore wehn topPieceUuid is object
                     if (pieceVisual.uuid !== topPieceUuid && pieceVisual.uuid !== bottomPieceVisual.uuid) {
                         newPieceVisuals.push(pieceVisual);
                     }
