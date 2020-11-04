@@ -8,16 +8,15 @@ const WhiteText = ({ children, style }) => {
 const panelColor = '#666699';
 
 export const MainPage = (props) => {
-
     const [menuState, setMenuState] = useState(GameState.menu.state)
     const [initialGameStates, setInitialGameStates] = useState([]);
     const [activeGameIndex, setActiveGameIndex] = useState(GameState.activeGameIndex.state);
-    const [p1sTurn, setP1sTurn] = useState(GameState.p1sTurn.state)
+    const [botsTurn, setBotsTurn] = useState(GameState.botsTurn.state)
 
     useStateEffect(GameState.activeGameIndex.subscribe(setActiveGameIndex))
     useStateEffect(GameState.initialGamesIndices.subscribe(setInitialGameStates));
     useStateEffect(GameState.menu.subscribe(setMenuState));
-    useStateEffect(GameState.p1sTurn.subscribe(setP1sTurn));
+    useStateEffect(GameState.botsTurn.subscribe(setBotsTurn));
 
     return <div style={{
         width: '100%',
@@ -41,16 +40,16 @@ export const MainPage = (props) => {
                         overflowY: 'auto',
                         borderWidth: '1px',
                         boxShadow: '4px',
-                        borderRadius: '2%',
-                        padding: '0px 20px'
+                        borderRadius: '16px',
+                        padding: '20px 20px'
                     }}>
                     {
                         menuState === 'initial-conditions'
                             ? <>
                                 <div>
-                                    <WhiteText>Select Initial Conditions</WhiteText>
+                                    <WhiteText style={{ margin: 0, fontSize: 20 }}>Select Initial Conditions</WhiteText>
                                 </div>
-                                <ol style={{ overflow: 'scroll', padding: 0 }}>
+                                <ol style={{ overflow: 'scroll', padding: 0, margin: 0 }}>
                                     {initialGameStates.map(([gameIndex, gameState], listIndex) => (
                                         <li key={gameIndex}
                                             style={{ flexDirection: 'row', display: 'flex' }}
@@ -103,11 +102,6 @@ export const MainPage = (props) => {
         }
         {
             <>
-                <div style={{ position: 'absolute', left: 0, top: 0, backgroundColor: panelColor, borderRadius: '2%', pointerEvents: 'auto', }}>
-                    <button onClick={() => {
-                        GameState.botMakeNextMove.trigger(true)
-                    }}>Next</button>
-                </div>
                 <div style={{ position: 'absolute', right: 0, bottom: 0, backgroundColor: panelColor, borderRadius: '2%', }}>
                     <WhiteText>{activeGameIndex ? activeGameIndex[0].toString() : ''}</WhiteText>
                     {
@@ -124,10 +118,10 @@ export const MainPage = (props) => {
         {
             <div style={{ position: 'absolute', top: 0, left: '50%', backgroundColor: panelColor, borderRadius: '2%', }}>
                 {
-                    p1sTurn === undefined ? null
-                        : p1sTurn
-                            ? <WhiteText>Your Turn </WhiteText>
-                            : <WhiteText>Bots Turn</WhiteText>
+                    botsTurn === undefined ? null
+                        : botsTurn
+                            ? <WhiteText>Bots Turn </WhiteText>
+                            : <WhiteText>Your Turn</WhiteText>
                 }
             </div>
         }

@@ -2,8 +2,8 @@ import GameState from './GameState';
 import Interopt from './interopt'
 
 const botSystem = {
-    onTurnChange(p1sTurn) {
-        if (GameState.botMakeNextMove.state) {
+    onTurnChange(botsTurn) {
+        if (botsTurn) {
             const gameStateIndex = GameState.activeGameIndex.state[0];
             const nextPossibleGameStateIndices = Interopt.getNextPossibleGameStateIndices(gameStateIndex);
             if (nextPossibleGameStateIndices.length === 0) return;
@@ -26,8 +26,7 @@ const botSystem = {
         }
     },
     init() {
-        // GameState.p1sTurn.subscribe(this.onTurnChange.bind(this))
-        GameState.botMakeNextMove.subscribe(this.onTurnChange.bind(this))
+        GameState.botsTurn.subscribe(this.onTurnChange.bind(this))
     }
 }
 

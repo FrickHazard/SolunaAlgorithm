@@ -285,7 +285,7 @@ const gameState = {
     moveUpdate: new Sub(),
     resetBoardUpdate: new Sub(),
     gameStateObject: new Sub(),
-    p1sTurn: new Sub(),
+    botsTurn: new Sub(),
     botMakeNextMove: new Sub(),
     setSelectedPiece([colorIndex, height, pieceUuid]) {
         if (this.selectedPieceIndex.state[0] !== undefined) {
@@ -317,7 +317,7 @@ const gameState = {
                     ]);
                     this.setActiveGameIndex(newGameIndex);
                     this.selectedPieceIndex.trigger([undefined, undefined]);
-                    this.p1sTurn.trigger(!this.p1sTurn.state)
+                    this.botsTurn.trigger(!this.botsTurn.state)
                 }
                 else {
                     console.error('Symmetric changes failed')
@@ -340,7 +340,6 @@ const gameState = {
         this.setActiveGameIndex(gameIndex);
         this.gameStateObject.trigger(gameStateObject);
         this.resetBoardUpdate.trigger(expandPartitons(gameStateObject));
-        this.selectedPieceIndex.trigger([undefined, undefined]);
     },
     setActiveGameIndex(gameIndex) {
         this.activeGameIndex.trigger([gameIndex, Interopt.getGameStateExpandedToPartitions(gameIndex), Interopt.getBranchResult(gameIndex)]);
@@ -353,7 +352,8 @@ const gameState = {
     },
     startGame({ playerGoesFirst }) {
         this.menu.trigger('none')
-        this.p1sTurn.trigger(playerGoesFirst)
+        this.selectedPieceIndex.trigger([undefined, undefined]);
+        this.botsTurn.trigger(!playerGoesFirst)
     },
     makeSymmetricMove(newGameIndex) {
         const currentGameState = Interopt.getGameState(this.activeGameIndex.state[0])
@@ -402,10 +402,9 @@ const gameState = {
             let [compRemove, compAdd] = getDiff(arrCurr1, arrNext1);
             let [compRemove2, compAdd2] = getDiff(arrCurr2, arrNext2);
 
-            console.log(arrCurr1, arrCurr2, 'ddd', arrNext1, arrNext2, compAdd[0] - compRemove[0])
+            // console.log(arrCurr1, arrCurr2, 'ddd', arrNext1, arrNext2, compAdd[0] - compRemove[0])
 
             if (Math.abs(sum1) > 0 && sum1 === -sum2 && (compAdd[0] - compRemove[0] === sum1 || compAdd2[0] - compRemove2[0] === sum2)) {
-                console.log('sdsf')
                 let [remove1, add1] = getDiff(arrCurr1, arrNext1);
                 let [remove2, add2] = getDiff(arrCurr2, arrNext2);
 
@@ -417,7 +416,6 @@ const gameState = {
                 changeArr.push([currentDiff[0], nextDiff[0]])
                 changeArr.push([currentDiff[1], nextDiff[1]])
             } else {
-                console.log('aaaa')
                 let [remove1, add1] = getDiff(arrCurr1, arrNext2);
                 let [remove2, add2] = getDiff(arrCurr2, arrNext1);
 
@@ -453,7 +451,7 @@ const gameState = {
             return newGameStateObject
         })()
 
-        console.log(newGameObjectState)
+        console.log(newGameObjectState, expandPartitons(newGameObjectState))
 
         const gameStateObjKeyValues2 = Object.entries(this.gameStateObject.state)
         const gameStateObjKeyValues = Object.entries(newGameObjectState)
@@ -477,7 +475,7 @@ const gameState = {
             expandPartitons(newGameObjectState),
         ]);
         this.setActiveGameIndex(newGameIndex);
-        this.p1sTurn.trigger(!this.p1sTurn.state)
+        this.botsTurn.trigger(!this.botsTurn.state)
     },
 };
 

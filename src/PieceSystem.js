@@ -85,7 +85,7 @@ export class PieceSystem {
         GameState.moveUpdate.subscribe(this.applyMove.bind(this));
         GameState.selectedPieceIndex.subscribe((st) => this.highlightSystem.setSelectionVisuals(st, this.pieceVisuals));
         GameState.selectedPieceIndex.subscribe(this.resetSubs.bind(this));
-        GameState.p1sTurn.subscribe(this.clearSubsOnBotTurn.bind(this))
+        GameState.botsTurn.subscribe(this.clearSubsOnBotTurn.bind(this))
         {
             this.piecePositions = [];
             const ratio = 50 / 4;
@@ -98,10 +98,11 @@ export class PieceSystem {
             this.piecePositions.sort(() => Math.random() - 0.5);
         }
     }
-    clearSubsOnBotTurn(p1sTurn) {
-        this.subscriptions.forEach(f => f());
-        if (!p1sTurn) {
+    clearSubsOnBotTurn(botsTurn) {
+        if (botsTurn) {
             this.subscriptions.forEach(f => f());
+        } else {
+            this.resetSubs([undefined, undefined])
         }
     }
     resetSubs(params) {
@@ -198,7 +199,6 @@ export class PieceSystem {
 
     applyMove([topPieceUuid, bottomPieceUuid, gameStateObj]) {
         const newPieceVisuals = [];
-        console.log(gameStateObj)
         let newHeight
         let topColorIndex
         if (isObject(topPieceUuid)) {
@@ -210,7 +210,6 @@ export class PieceSystem {
 
             topColorIndex = this.pieceVisuals.find(x => x.uuid === topPieceUuid).userData.colorIndex;
         }
-
 
         let bottomPieceVisual
         if (isObject(topPieceUuid)) {
