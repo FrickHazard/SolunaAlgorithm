@@ -3,10 +3,18 @@ import Interopt from './interopt'
 
 const botSystem = {
     onTurnChange(botsTurn) {
-        if (botsTurn) {
+        if (botsTurn || !botsTurn) {
             const gameStateIndex = GameState.activeGameIndex.state[0];
             const nextPossibleGameStateIndices = Interopt.getNextPossibleGameStateIndices(gameStateIndex);
-            if (nextPossibleGameStateIndices.length === 0) return;
+            if (nextPossibleGameStateIndices.length === 0) {
+                GameState.initialGamesIndices.state.sort(() => Math.random() - 0.5);
+                // function shuffle(array) {
+                //     array.sort(() => Math.random() - 0.5);
+                //   }
+                GameState.resetBoard(GameState.initialGamesIndices.state[0][0]);
+                GameState.startGame({ playerGoesFirst: false })
+                return
+            }
             let highestBranchCountForOpponentToMakeMistake = 0;
             let highestBranchCountForOpponentToMakeMistake_i = nextPossibleGameStateIndices[0];
             for (const gameIndex of nextPossibleGameStateIndices) {

@@ -201,6 +201,18 @@ export class PieceSystem {
         const newPieceVisuals = [];
         let newHeight
         let topColorIndex
+
+        if (Object.values(gameStateObj).reduce((acc, item) => {
+            return acc += item.reduce((acc2, item2) => {
+                return acc2 + (item2.number * item2.count)
+            }, 0)
+        }, 0) !== 12) {
+            throw new Error()
+        }
+
+        console.log(topPieceUuid, bottomPieceUuid)
+        console.log('Game State: ', gameStateObj)
+        console.log('Visuals: ', this.pieceVisuals.map(x => ({ ...x.userData })))
         if (isObject(topPieceUuid)) {
             newHeight = topPieceUuid.height
             topColorIndex = topPieceUuid.topColorIndex
@@ -243,5 +255,11 @@ export class PieceSystem {
         this.group.children = [];
         this.group.add(this.highlightSystem.group);
         this.pieceVisuals.forEach(x => this.group.add(x))
+
+        if (this.pieceVisuals.reduce((acc, item) => {
+            return acc += item.userData.height
+        }, 0) !== 12) {
+            throw new Error()
+        }
     }
 }

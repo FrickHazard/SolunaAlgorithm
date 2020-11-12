@@ -68,6 +68,8 @@ struct ModuleState {
     std::vector<BranchResult> allBranchResults;
     std::vector<uint32_t> initialStates;
     std::vector<std::vector<PartitionNumber>> allPartitions;
+    std::unordered_map<std::vector<uint32_t>, uint32_t, GameStateHash> gameStateToIndexMap;
+    std::unordered_map<std::vector<PartitionNumber>, uint32_t, PartitionHash> partitionToIdMap;
 } state;
 
 // recursive function, rewrite into iterative, this is the biggest choke point, exponential growth in color count
@@ -419,8 +421,6 @@ BranchResult SolunaAlgorithm
     
     result.flipMoveCount = result.guaranteedWin ? ((uint32_t)moveStateIndices.size() - guaranteedWinChildrenCount) : 0;
 
-    // choose best path here
-
     allBranchResults[i] = result;
     
     return result;
@@ -488,6 +488,256 @@ void getAllSymmertricBoardSpaces(uint32_t COLOR_COUNT, uint32_t PIECE_COUNT) {
     state.initialStates = initialStates;
     state.allPartitions = allPartitions;
     state.allMoves = allMoves;
+    state.gameStateToIndexMap = gameStateToIndexMap;
+    state.partitionToIdMap = partitionToIdMap;
+}
+
+void partitionMultiSetDiff
+(
+  const std::vector<PartitionNumber> & from,
+  const std::vector<PartitionNumber> & to,
+  std::vector<PartitionNumber> & wRemove,
+  std::vector<PartitionNumber> & wAdd
+) {
+    uint32_t l = 0, r = 0;
+    while (from.size() != l || to.size() != r) {
+        if (from.size() == l) {
+            wAdd.push_back(to[r]);
+            ++r;
+        } else if (to.size() == r) {
+            wRemove.push_back(from[l]);
+            ++l;
+        } else if (from[l].number != to[r].number) {
+            if (from[l].number < to[r].number) {
+                wRemove.push_back(from[l]);
+                ++l;
+            } else {
+                wAdd.push_back(to[r]);
+                ++r;
+            }
+        } else {
+            if (from[l].count != to[r].count) {
+                if (from[l].count < to[r].count) {
+                    wAdd.push_back({ from[l].number, to[r].count - from[l].count });
+                } else {
+                    wRemove.push_back({ from[l].number, from[l].count - to[r].count });
+                }
+            }
+            ++l; ++r;
+        }
+    }
+}
+
+uint32_t sumPartitionNumber(const std::vector<PartitionNumber> x) {
+    uint32_t sum = 0;
+    for (uint32_t i = 0; i < x.size(); ++i) {
+        sum += x[i].number * x[i].count;
+    }
+    return sum;
+}
+
+struct ChangeDat
+{
+    PartitionNumber pieceTop;
+    PartitionNumber pieceBottom;
+    uint32_t toPartition;
+    uint32_t fromPartiton;
+    bool samePartition;
+};
+uint32_t forward_reconstruction(uint32_t gameId, ChangeDat change)
+{
+    std::vector<uint32_t> newGame;
+    std::vector<uint32_t> game = state.allGameStates[gameId];
+    bool appliedTop = false;
+    bool appliedBottom = false;
+    PartitionNumber combinedPiece = {change.pieceTop.number + change.pieceBottom.number, 1};
+    for (uint32_t i = 0; i < game.size(); ++i) {
+        std::vector<PartitionNumber> partiton;
+        bool topPieceChange = !appliedTop && change.toPartition == game[i];
+        bool bottomPieceChange = (topPieceChange && change.samePartition) || (!appliedBottom && !topPieceChange && change.fromPartiton == game[i]);
+        bool addedCombinedPiece = false;
+        for (uint32_t j = 0; j < state.allPartitions[game[i]].size(); ++j) {
+            PartitionNumber a = state.allPartitions[game[i]][j];
+            if (topPieceChange) {
+                if (a.number == change.pieceTop.number) {
+                    --a.count;
+                } else if (!addedCombinedPiece && a.number == combinedPiece.number) {
+                    ++a.count;
+                    addedCombinedPiece = true;
+                } else if (!addedCombinedPiece && a.number > combinedPiece.number) {
+                    partiton.push_back(combinedPiece);
+                    addedCombinedPiece = true;
+                }
+            }
+            if (bottomPieceChange) {
+                if (a.number == change.pieceBottom.number) {
+                    --a.count;
+                }
+            }
+            
+            if (a.count > 0) {
+                partiton.push_back(a);
+            }
+        }
+        
+        if (topPieceChange) appliedTop = true;
+        if (bottomPieceChange) appliedBottom = true;
+        if (topPieceChange && !addedCombinedPiece) {
+            partiton.push_back(combinedPiece);
+        }
+        
+        if (partiton.size() > 0) newGame.push_back(state.partitionToIdMap.at(partiton));
+    }
+    
+    std::sort(newGame.begin(), newGame.end());
+    
+    return  state.gameStateToIndexMap.at(newGame);
+}
+
+
+ChangeDat
+backward_reconstruction(uint32_t gameIdFrom, uint32_t gameIdTo) {
+    std::vector<uint32_t> gameFrom = state.allGameStates[gameIdFrom];
+    std::vector<uint32_t> gameTo = state.allGameStates[gameIdTo];
+   // multiset diff, for two sorted ararys
+    std::vector<uint32_t> remove;
+    std::vector<uint32_t> add;
+    uint32_t l = 0, r = 0;
+    while (gameFrom.size() != l || gameTo.size() != r) {
+        if (gameFrom.size() == l) {
+            add.push_back(gameTo[r]);
+            ++r;
+        } else if (gameTo.size() == r) {
+            remove.push_back(gameFrom[l]);
+            ++l;
+        } else if (gameFrom[l] != gameTo[r]) {
+            if (gameFrom[l] < gameTo[r]) {
+                remove.push_back(gameFrom[l]);
+                ++l;
+            } else {
+                add.push_back(gameTo[r]);
+                ++r;
+            }
+        } else {
+            ++l; ++r;
+        }
+    }
+    
+    if (add.size() == 1 && remove.size() == 1) {
+        std::vector<PartitionNumber> a;
+        std::vector<PartitionNumber> b;
+        partitionMultiSetDiff(state.allPartitions[remove[0]], state.allPartitions[add[0]], a, b);
+        
+        return {
+            a[0],
+            ((a.size() == 1) ? a[0] : a[1]),
+            remove[0],
+            remove[0],
+            true
+        };
+    }
+    else if (add.size() == 1 && remove.size() == 2) {
+        uint32_t sum1 = sumPartitionNumber(state.allPartitions[remove[0]]);
+        uint32_t sum2 = sumPartitionNumber(state.allPartitions[remove[1]]);
+        std::vector<PartitionNumber> a;
+        std::vector<PartitionNumber> b;
+        // if sum1 == sum2 then there must be symmetry, since the piece comes from another color
+        if (sum1 > sum2) {
+            partitionMultiSetDiff(state.allPartitions[remove[0]], state.allPartitions[add[0]], a, b);
+            return {
+                a[0],
+                state.allPartitions[remove[1]][0],
+                remove[0],
+                remove[1],
+                false
+            };
+         
+        } else {
+            partitionMultiSetDiff(state.allPartitions[remove[1]], state.allPartitions[add[0]], a, b);
+            return {
+                a[0],
+                state.allPartitions[remove[0]][0],
+                remove[1],
+                remove[0],
+                false
+            };
+        }
+    }
+    else {
+        int sumRemove1 = (int)sumPartitionNumber(state.allPartitions[remove[0]]);
+        int sumRemove2 = (int)sumPartitionNumber(state.allPartitions[remove[1]]);
+        int sumAdd1 = (int)sumPartitionNumber(state.allPartitions[add[0]]);
+        int sumAdd2 = (int)sumPartitionNumber(state.allPartitions[add[1]]);
+        
+        int diff1 = (sumAdd1 - sumRemove1);
+        int diff2 = (sumAdd2 - sumRemove2);
+        
+        std::vector<PartitionNumber> a;
+        std::vector<PartitionNumber> b;
+        std::vector<PartitionNumber> c;
+        std::vector<PartitionNumber> d;
+        
+        partitionMultiSetDiff(state.allPartitions[remove[0]], state.allPartitions[add[0]], a, b);
+        partitionMultiSetDiff(state.allPartitions[remove[1]], state.allPartitions[add[1]], c, d);
+        
+        if (
+            diff1 != 0 && diff1 == - diff2
+            && (
+                (a.size() == 1 && a[0].count == 1 &&
+                 b.size() == 1 && b[0].count == 1 &&
+                 d.size() == 0 &&
+                 c.size() == 1 && c[0].count == 1
+                )
+                ||
+                (c.size() == 1 && c[0].count == 1 &&
+                d.size() == 1 && d[0].count == 1 &&
+                b.size() == 0 &&
+                a.size() == 1 && a[0].count == 1)
+            )
+        ) {
+            if (sumAdd1 > sumRemove1) {
+                return {
+                    a[0],
+                    c[0],
+                    remove[0],
+                    remove[1],
+                    false
+                };
+            } else {
+                return {
+                    c[0],
+                    a[0],
+                    remove[1],
+                    remove[0],
+                    false
+                };
+            }
+        } else {
+            a = std::vector<PartitionNumber>();
+            b = std::vector<PartitionNumber>();
+            c = std::vector<PartitionNumber>();
+            d = std::vector<PartitionNumber>();
+            partitionMultiSetDiff(state.allPartitions[remove[0]], state.allPartitions[add[1]], a, b);
+            partitionMultiSetDiff(state.allPartitions[remove[1]], state.allPartitions[add[0]], c, d);
+            if (sumAdd2 > sumRemove1) {
+                return {
+                    a[0],
+                    c[0],
+                    remove[0],
+                    remove[1],
+                    false
+                };
+            } else {
+                return {
+                    c[0],
+                    a[0],
+                    remove[1],
+                    remove[0],
+                    false
+                };
+            }
+        }
+    }
 }
 
 // API of webassembly
@@ -541,15 +791,16 @@ uint32_t getInitialStatesCount() {
 }
 #endif
 
-//int main() {
-//    calculateAllGameStates(4, 12);
-//   
-//    uint32_t moveCount = 0;
-//    uint32_t c = 0;
-//    for (uint32_t i = 0; i < state.allBranchResults.size(); ++i) {
-//        moveCount += (uint32_t)state.allMoves[i].size();
-//        c += (uint32_t)state.allBranchResults[i].flipMoveCount;
-//    }
-//    
-//    return 0;
-//}
+int main() {
+    calculateAllGameStates(4, 12);
+   
+    for (uint32_t i = 0; i < state.allGameStates.size(); ++i) {
+        for (uint32_t j = 0; j < state.allMoves[i].size(); ++j) {
+            ChangeDat dat = backward_reconstruction(i, state.allMoves[i][j]);
+            uint32_t ff = forward_reconstruction(i, dat);
+            assert(ff == state.allMoves[i][j]);
+        }
+    }
+    
+    return 0;
+}

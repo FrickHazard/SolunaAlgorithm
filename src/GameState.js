@@ -318,6 +318,8 @@ const gameState = {
                     this.setActiveGameIndex(newGameIndex);
                     this.selectedPieceIndex.trigger([undefined, undefined]);
                     this.botsTurn.trigger(!this.botsTurn.state)
+
+                    console.log('Piece to move construction', newGameStateObject)
                 }
                 else {
                     console.error('Symmetric changes failed')
