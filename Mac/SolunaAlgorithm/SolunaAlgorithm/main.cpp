@@ -594,7 +594,6 @@ uint32_t forward_reconstruction(uint32_t gameId, ChangeDat change)
     return  state.gameStateToIndexMap.at(newGame);
 }
 
-
 ChangeDat
 backward_reconstruction(uint32_t gameIdFrom, uint32_t gameIdTo) {
     std::vector<uint32_t> gameFrom = state.allGameStates[gameIdFrom];
@@ -787,18 +786,26 @@ uint32_t getInitialStatesCount() {
     return (uint32_t)state.initialStates.size();
 }
 
+ChangeDat DAT;
+ChangeDat * doBackwardReconstruction(uint32_t gameIndex, uint32_t moveGameIndex) {
+    DAT = backward_reconstruction(gameIndex, moveGameIndex);
+    return  &DAT;
+}
+
+uint32_t doForwardReconstruction(uint32_t gameIndex, ChangeDat dat) {
+    return forward_reconstruction(gameIndex, dat);
+}
+
 #ifdef __cplusplus
 }
 #endif
 
 int main() {
     calculateAllGameStates(4, 12);
-   
+    size_t a = sizeof(ChangeDat);
     for (uint32_t i = 0; i < state.allGameStates.size(); ++i) {
         for (uint32_t j = 0; j < state.allMoves[i].size(); ++j) {
-            ChangeDat dat = backward_reconstruction(i, state.allMoves[i][j]);
-            uint32_t ff = forward_reconstruction(i, dat);
-            assert(ff == state.allMoves[i][j]);
+            assert(forward_reconstruction(i, backward_reconstruction(i, state.allMoves[i][j])) == state.allMoves[i][j]);
         }
     }
     

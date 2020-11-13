@@ -358,123 +358,31 @@ const gameState = {
         this.botsTurn.trigger(!playerGoesFirst)
     },
     makeSymmetricMove(newGameIndex) {
-        const currentGameState = Interopt.getGameState(this.activeGameIndex.state[0])
         const newGameState = Interopt.getGameState(newGameIndex)
-        const [currentDiff, nextDiff] = getDiff(currentGameState, newGameState);
-        const sum = (arr) => arr.reduce((acc, item) => acc + item, 0)
-        const [removeObj, addObj] = [{}, {}]
-        const changeArr = []
+        const changeDat = Interopt.doBackwardReconstruction(this.activeGameIndex.state[0], newGameState)
 
-        if (currentDiff.length === 1 && currentDiff.length === nextDiff.length) {
-            const [remove, add] = getDiff(partitionStructToNumb(Interopt.getPartition(currentDiff[0])), partitionStructToNumb(Interopt.getPartition(nextDiff[0])));
-            removeObj[currentDiff[0]] = remove[0]
-            addObj[nextDiff[0]] = add[0]
-            changeArr.push([currentDiff[0], nextDiff[0]])
-            console.log('1')
-        } else if (currentDiff.length === 2 && nextDiff.length === 1) {
-            const arr1 = partitionStructToNumb(Interopt.getPartition(currentDiff[0]));
-            const arr2 = partitionStructToNumb(Interopt.getPartition(currentDiff[1]));
-            const sum1 = sum(arr1)
-            const sum2 = sum(arr2)
-            if (sum2 > sum1) {
-                let [remove, add] = getDiff(arr2, partitionStructToNumb(Interopt.getPartition(nextDiff[0])));
-                removeObj[currentDiff[1]] = remove[0]
-                addObj[nextDiff[0]] = add[0]
+        const newGameStateObject = { ...this.gameStateObject.state }
 
-                changeArr.push([currentDiff[0], undefined])
-                changeArr.push([currentDiff[1], nextDiff[0]])
-            } else {
-                let [remove, add] = getDiff(arr1, partitionStructToNumb(Interopt.getPartition(nextDiff[0])));
-                removeObj[currentDiff[0]] = remove[0]
-                addObj[nextDiff[0]] = add[0]
+        const entries = Object.entries(newGameStateObject)
 
-                changeArr.push([currentDiff[0], nextDiff[0]])
-                changeArr.push([currentDiff[1], undefined])
-            }
-            console.log('2')
-        } else if (currentDiff.length === 2 && nextDiff.length === 2) {
-            const arrCurr1 = partitionStructToNumb(Interopt.getPartition(currentDiff[0]));
-            const arrCurr2 = partitionStructToNumb(Interopt.getPartition(currentDiff[1]));
-            const arrNext1 = partitionStructToNumb(Interopt.getPartition(nextDiff[0]))
-            const arrNext2 = partitionStructToNumb(Interopt.getPartition(nextDiff[1]))
+        const topId = {
+            topColorIndex: Number(entries.find(x => x[1] === changeDat.toPartition)[0]),
+            height: changeDat.pieceTop.number
+        };
+        const bottomId = {
+            bottomColorIndex: (changeDat.samePartition
+                ? topId.topColorIndex
+                : Number(entries.find(x => x[1] === changeDat.fromPartition && Number(x[0]) !== topId.topColorIndex)[0])),
+            height: changeDat.pieceBottom.number
+        };
 
-            const sum1 = (sum(arrNext1) - sum(arrCurr1))
-            const sum2 = (sum(arrNext2) - sum(arrCurr2))
+        console.log(topId, bottomId, expandPartitons(newGameStateObject))
 
-            let [compRemove, compAdd] = getDiff(arrCurr1, arrNext1);
-            let [compRemove2, compAdd2] = getDiff(arrCurr2, arrNext2);
-
-            // console.log(arrCurr1, arrCurr2, 'ddd', arrNext1, arrNext2, compAdd[0] - compRemove[0])
-
-            if (Math.abs(sum1) > 0 && sum1 === -sum2 && (compAdd[0] - compRemove[0] === sum1 || compAdd2[0] - compRemove2[0] === sum2)) {
-                let [remove1, add1] = getDiff(arrCurr1, arrNext1);
-                let [remove2, add2] = getDiff(arrCurr2, arrNext2);
-
-                removeObj[currentDiff[0]] = remove1[0]
-                addObj[nextDiff[0]] = add1[0]
-                removeObj[currentDiff[1]] = remove2[0]
-                addObj[nextDiff[1]] = add2[0]
-
-                changeArr.push([currentDiff[0], nextDiff[0]])
-                changeArr.push([currentDiff[1], nextDiff[1]])
-            } else {
-                let [remove1, add1] = getDiff(arrCurr1, arrNext2);
-                let [remove2, add2] = getDiff(arrCurr2, arrNext1);
-
-                removeObj[currentDiff[0]] = remove1[0]
-                addObj[nextDiff[0]] = add1[0]
-                removeObj[currentDiff[1]] = remove2[0]
-                addObj[nextDiff[1]] = add2[0]
-
-                changeArr.push([currentDiff[0], nextDiff[1]])
-                changeArr.push([currentDiff[1], nextDiff[0]])
-            }
-            console.log('3')
-        } else console.error('This should never happen.')
-
-        const bottomId = {}
-        const topId = {}
-
-        const newGameObjectState = (() => {
-            const newGameStateObject = { ...this.gameStateObject.state }
-            const gameStateObjKeyValues = Object.entries(this.gameStateObject.state)
-            const visited = new Array(gameStateObjKeyValues.length).fill(false)
-            for (const [key, value] of changeArr) {
-                const keyValueI = gameStateObjKeyValues.findIndex((_keyValue, idx) => _keyValue[1] === Number(key) && !visited[idx])
-                visited[keyValueI] = true
-                const keyValue = gameStateObjKeyValues[keyValueI]
-                if (value !== undefined) {
-                    newGameStateObject[keyValue[0]] = value
-                } else {
-                    delete newGameStateObject[keyValue[0]]
-                }
-            }
-
-            return newGameStateObject
-        })()
-
-        console.log(newGameObjectState, expandPartitons(newGameObjectState))
-
-        const gameStateObjKeyValues2 = Object.entries(this.gameStateObject.state)
-        const gameStateObjKeyValues = Object.entries(newGameObjectState)
-        for (const pair of changeArr) {
-            if (pair[1] === undefined || addObj[pair[1]] === undefined) continue
-            let bottomColorIndex = Number(gameStateObjKeyValues2.find(x => x[1] === Number(pair[0]))[0])
-            let topColorIndex = Number(gameStateObjKeyValues.find(x => x[1] === Number(pair[1]))[0])
-
-            bottomId.bottomColorIndex = bottomColorIndex
-            bottomId.height = removeObj[pair[0]]
-            topId.topColorIndex = topColorIndex
-            topId.height = addObj[pair[1]]
-        }
-
-        console.log(changeArr, addObj)
-
-        this.gameStateObject.trigger(newGameObjectState);
+        this.gameStateObject.trigger(newGameStateObject);
         this.moveUpdate.trigger([
             topId,
             bottomId,
-            expandPartitons(newGameObjectState),
+            expandPartitons(newGameStateObject),
         ]);
         this.setActiveGameIndex(newGameIndex);
         this.botsTurn.trigger(!this.botsTurn.state)
