@@ -202,19 +202,11 @@ export class PieceSystem {
         let newHeight
         let topColorIndex
 
-        if (Object.values(gameStateObj).reduce((acc, item) => {
-            return acc += item.reduce((acc2, item2) => {
-                return acc2 + (item2.number * item2.count)
-            }, 0)
-        }, 0) !== 12) {
-            throw new Error()
-        }
-
         console.log(topPieceUuid, bottomPieceUuid)
         console.log('Game State: ', gameStateObj)
         console.log('Visuals: ', this.pieceVisuals.map(x => ({ ...x.userData })))
         if (isObject(topPieceUuid)) {
-            newHeight = topPieceUuid.height
+            newHeight = topPieceUuid.height + bottomPieceUuid.height
             topColorIndex = topPieceUuid.topColorIndex
         } else {
             newHeight = this.pieceVisuals.find(x => x.uuid === topPieceUuid).userData.height +
@@ -229,7 +221,6 @@ export class PieceSystem {
         } else {
             bottomPieceVisual = this.pieceVisuals.find(x => x.uuid === bottomPieceUuid);
         }
-
         bottomPieceVisual.setHeight(newHeight);
         bottomPieceVisual.setLabel(this.labelGeometries[topColorIndex], this.labelMaterial);
         bottomPieceVisual.userData = { colorIndex: topColorIndex, height: newHeight };
@@ -241,11 +232,13 @@ export class PieceSystem {
             for (const partitionNumb of partition) {
                 const visuals = this.pieceVisuals.filter(x =>
                     x.userData.colorIndex === colorIndex
-                    && x.userData.height === partitionNumb.number).slice(0, partitionNumb.count);
+                    && x.userData.height === partitionNumb.number)
 
+                let c = 0
                 for (const pieceVisual of visuals) {
-                    if (pieceVisual.uuid !== topPieceUuid && pieceVisual.uuid !== bottomPieceVisual.uuid) {
+                    if (c < partitionNumb.count && pieceVisual.uuid !== topPieceUuid && pieceVisual.uuid !== bottomPieceVisual.uuid) {
                         newPieceVisuals.push(pieceVisual);
+                        ++c;
                     }
                 }
             }

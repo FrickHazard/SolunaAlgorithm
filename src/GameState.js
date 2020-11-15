@@ -85,16 +85,18 @@ const updateGameStateObject = (gameStateObject, topIndex, bottomIndex, changes) 
     if (changes[gameStateObject[topIndex]] !== undefined) {
         const oldIndex = gameStateObject[topIndex];
         gameStateObject[topIndex] = changes[gameStateObject[topIndex]]
-        changes[oldIndex] = undefined;
+        delete changes[oldIndex];
     }
     else {
-        gameStateObject[topIndex] = undefined;
+        delete gameStateObject[topIndex];
         console.error();
     }
 
     if (topIndex !== bottomIndex && changes[gameStateObject[bottomIndex]] !== undefined) {
         gameStateObject[bottomIndex] = changes[gameStateObject[bottomIndex]]
-    } else if (topIndex !== bottomIndex) gameStateObject[bottomIndex] = undefined;
+    } else if (topIndex !== bottomIndex) {
+        delete gameStateObject[bottomIndex];
+    }
 
     return gameStateObject
 }
@@ -286,7 +288,6 @@ const gameState = {
     resetBoardUpdate: new Sub(),
     gameStateObject: new Sub(),
     botsTurn: new Sub(),
-    botMakeNextMove: new Sub(),
     setSelectedPiece([colorIndex, height, pieceUuid]) {
         if (this.selectedPieceIndex.state[0] !== undefined) {
             const [currentColorIndex, currentHeight, currentPieceUuid] = this.selectedPieceIndex.state[0];
@@ -301,22 +302,30 @@ const gameState = {
                 if (res !== undefined) {
                     const [newGameIndex, changes] = res;
 
+                    console.log(newGameIndex, changes)
                     const newGameStateObject = updateGameStateObject(
                         { ...this.gameStateObject.state },
                         currentColorIndex,
                         colorIndex,
                         changes);
 
-                    // console.log(this.gameStateObject.state, changes, newGameStateObject)
+                    if (Object.values(expandPartitons(newGameStateObject)).reduce((acc, item) => {
+                        return acc += item.reduce((acc2, item2) => {
+                            return acc2 + (item2.number * item2.count)
+                        }, 0)
+                    }, 0) !== 12) {
+                        console.error(expandPartitons(newGameStateObject))
+                        throw new Error()
+                    }
 
                     this.gameStateObject.trigger(newGameStateObject);
+                    this.selectedPieceIndex.trigger([undefined, undefined]);
                     this.moveUpdate.trigger([
                         currentPieceUuid,
                         pieceUuid,
                         expandPartitons(newGameStateObject),
                     ]);
                     this.setActiveGameIndex(newGameIndex);
-                    this.selectedPieceIndex.trigger([undefined, undefined]);
                     this.botsTurn.trigger(!this.botsTurn.state)
 
                     console.log('Piece to move construction', newGameStateObject)
@@ -358,25 +367,33 @@ const gameState = {
         this.botsTurn.trigger(!playerGoesFirst)
     },
     makeSymmetricMove(newGameIndex) {
-        const newGameState = Interopt.getGameState(newGameIndex)
-        const changeDat = Interopt.doBackwardReconstruction(this.activeGameIndex.state[0], newGameState)
+        const changeDat = Interopt.doBackwardReconstruction(this.activeGameIndex.state[0], newGameIndex)
 
         const newGameStateObject = { ...this.gameStateObject.state }
 
         const entries = Object.entries(newGameStateObject)
 
+        const entry1 = entries.find(x => changeDat.toPartition === x[1])
+        const entry2 = changeDat.samePartition
+            ? null
+            : entries.find(x => changeDat.fromPartition === x[1] && x[0] !== entry1[0])
+
         const topId = {
-            topColorIndex: Number(entries.find(x => x[1] === changeDat.toPartition)[0]),
+            topColorIndex: Number(entry1[0]),
             height: changeDat.pieceTop.number
         };
         const bottomId = {
             bottomColorIndex: (changeDat.samePartition
                 ? topId.topColorIndex
-                : Number(entries.find(x => x[1] === changeDat.fromPartition && Number(x[0]) !== topId.topColorIndex)[0])),
+                : Number(entry2[0])),
             height: changeDat.pieceBottom.number
         };
 
-        console.log(topId, bottomId, expandPartitons(newGameStateObject))
+        newGameStateObject[entry1[0]] = changeDat.toPartitionNew
+        if (changeDat.twoChanges) newGameStateObject[entry2[0]] = changeDat.fromPartitionNew
+        else if (!changeDat.samePartition) {
+            delete newGameStateObject[entry2[0]]
+        }
 
         this.gameStateObject.trigger(newGameStateObject);
         this.moveUpdate.trigger([

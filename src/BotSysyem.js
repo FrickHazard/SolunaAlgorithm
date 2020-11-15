@@ -3,7 +3,7 @@ import Interopt from './interopt'
 
 const botSystem = {
     onTurnChange(botsTurn) {
-        if (botsTurn || !botsTurn) {
+        if (botsTurn) {
             const gameStateIndex = GameState.activeGameIndex.state[0];
             const nextPossibleGameStateIndices = Interopt.getNextPossibleGameStateIndices(gameStateIndex);
             if (nextPossibleGameStateIndices.length === 0) {
@@ -30,7 +30,6 @@ const botSystem = {
                 }
             }
             GameState.makeSymmetricMove(highestBranchCountForOpponentToMakeMistake_i);
-            GameState.botMakeNextMove.trigger(false)
         }
     },
     init() {

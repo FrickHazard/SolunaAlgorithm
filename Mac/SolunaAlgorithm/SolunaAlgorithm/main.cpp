@@ -543,6 +543,9 @@ struct ChangeDat
     uint32_t toPartition;
     uint32_t fromPartiton;
     bool samePartition;
+    uint32_t toPartitionNew;
+    uint32_t fromPartitionNew;
+    bool twoChanges;
 };
 uint32_t forward_reconstruction(uint32_t gameId, ChangeDat change)
 {
@@ -632,7 +635,10 @@ backward_reconstruction(uint32_t gameIdFrom, uint32_t gameIdTo) {
             ((a.size() == 1) ? a[0] : a[1]),
             remove[0],
             remove[0],
-            true
+            true,
+            add[0],
+            0,
+            false
         };
     }
     else if (add.size() == 1 && remove.size() == 2) {
@@ -648,6 +654,9 @@ backward_reconstruction(uint32_t gameIdFrom, uint32_t gameIdTo) {
                 state.allPartitions[remove[1]][0],
                 remove[0],
                 remove[1],
+                false,
+                add[0],
+                0,
                 false
             };
          
@@ -658,6 +667,9 @@ backward_reconstruction(uint32_t gameIdFrom, uint32_t gameIdTo) {
                 state.allPartitions[remove[0]][0],
                 remove[1],
                 remove[0],
+                false,
+                add[0],
+                0,
                 false
             };
         }
@@ -700,7 +712,10 @@ backward_reconstruction(uint32_t gameIdFrom, uint32_t gameIdTo) {
                     c[0],
                     remove[0],
                     remove[1],
-                    false
+                    false,
+                    add[0],
+                    add[1],
+                    true
                 };
             } else {
                 return {
@@ -708,7 +723,10 @@ backward_reconstruction(uint32_t gameIdFrom, uint32_t gameIdTo) {
                     a[0],
                     remove[1],
                     remove[0],
-                    false
+                    false,
+                    add[1],
+                    add[0],
+                    true
                 };
             }
         } else {
@@ -724,7 +742,10 @@ backward_reconstruction(uint32_t gameIdFrom, uint32_t gameIdTo) {
                     c[0],
                     remove[0],
                     remove[1],
-                    false
+                    false,
+                    add[1],
+                    add[0],
+                    true
                 };
             } else {
                 return {
@@ -732,7 +753,10 @@ backward_reconstruction(uint32_t gameIdFrom, uint32_t gameIdTo) {
                     a[0],
                     remove[1],
                     remove[0],
-                    false
+                    false,
+                    add[0],
+                    add[1],
+                    true
                 };
             }
         }
@@ -802,10 +826,21 @@ uint32_t doForwardReconstruction(uint32_t gameIndex, ChangeDat dat) {
 
 int main() {
     calculateAllGameStates(4, 12);
-    size_t a = sizeof(ChangeDat);
+    size_t a = sizeof(uint32_t);
     for (uint32_t i = 0; i < state.allGameStates.size(); ++i) {
         for (uint32_t j = 0; j < state.allMoves[i].size(); ++j) {
-            assert(forward_reconstruction(i, backward_reconstruction(i, state.allMoves[i][j])) == state.allMoves[i][j]);
+            ChangeDat dat = backward_reconstruction(i, state.allMoves[i][j]);
+            assert(forward_reconstruction(i, dat) == state.allMoves[i][j]);
+            {
+                std::vector<uint32_t> remove;
+                remove.push_back(dat.fromPartiton);
+                if (!dat.samePartition) remove.push_back(dat.toPartition);
+                std::vector<uint32_t> add;
+                add.push_back(dat.toPartitionNew);
+                if (dat.twoChanges) add.push_back(dat.fromPartitionNew);
+                std::vector<uint32_t> newGameState = copyAndApplyPartitionIdChanges(state.allGameStates[i], remove, add);
+                assert(state.gameStateToIndexMap.at(newGameState) ==  state.allMoves[i][j]);
+            }
         }
     }
     

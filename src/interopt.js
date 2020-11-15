@@ -122,6 +122,9 @@ const interopt = {
             toPartition: new Uint32Array(Module.HEAP32.buffer, changeDatPtr + 16, 1)[0],
             fromPartition: new Uint32Array(Module.HEAP32.buffer, changeDatPtr + 20, 1)[0],
             samePartition: new Uint8Array(Module.HEAP8.buffer, changeDatPtr + 24, 1)[0],
+            toPartitionNew: new Uint32Array(Module.HEAP32.buffer, changeDatPtr + 28, 1)[0],
+            fromPartitionNew: new Uint32Array(Module.HEAP32.buffer, changeDatPtr + 32, 1)[0],
+            twoChanges: new Uint8Array(Module.HEAP8.buffer, changeDatPtr + 36, 1)[0],
         };
 
         return changeDat
