@@ -202,6 +202,8 @@ export class PieceSystem {
         let newHeight
         let topColorIndex
 
+
+
         console.log(topPieceUuid, bottomPieceUuid)
         console.log('Game State: ', gameStateObj)
         console.log('Visuals: ', this.pieceVisuals.map(x => ({ ...x.userData })))

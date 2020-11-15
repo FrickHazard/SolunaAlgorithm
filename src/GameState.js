@@ -294,46 +294,57 @@ const gameState = {
             if (pieceUuid === currentPieceUuid) {
                 this.selectedPieceIndex.trigger([undefined, undefined]);
             } else {
-                const res = getSymmetricChange(
-                    [this.gameStateObject.state[currentColorIndex], currentHeight, currentPieceUuid],
-                    [this.gameStateObject.state[colorIndex], height, pieceUuid],
-                    (currentColorIndex === colorIndex),
-                    this.activeGameIndex.state[0]);
-                if (res !== undefined) {
-                    const [newGameIndex, changes] = res;
+                const newGameStateObject = { ...this.gameStateObject.state }
+                console.log(this.gameStateObject.state)
+                const nextGameIndex = Interopt.doForwardReconstruction(this.activeGameIndex.state[0], {
+                    pieceTop: {
+                        number: currentHeight
+                    },
+                    pieceBottom: {
+                        number: height,
+                    },
+                    toPartition: this.gameStateObject.state[currentColorIndex],
+                    fromPartition: this.gameStateObject.state[colorIndex],
+                    samePartition: (currentColorIndex === colorIndex)
+                })
 
-                    console.log(newGameIndex, changes)
-                    const newGameStateObject = updateGameStateObject(
-                        { ...this.gameStateObject.state },
-                        currentColorIndex,
-                        colorIndex,
-                        changes);
+                const changeDat = Interopt.doBackwardReconstruction(this.activeGameIndex.state[0], nextGameIndex)
 
-                    if (Object.values(expandPartitons(newGameStateObject)).reduce((acc, item) => {
-                        return acc += item.reduce((acc2, item2) => {
-                            return acc2 + (item2.number * item2.count)
-                        }, 0)
-                    }, 0) !== 12) {
-                        console.error(expandPartitons(newGameStateObject))
-                        throw new Error()
-                    }
+                console.log(changeDat, nextGameIndex)
 
-                    this.gameStateObject.trigger(newGameStateObject);
-                    this.selectedPieceIndex.trigger([undefined, undefined]);
-                    this.moveUpdate.trigger([
-                        currentPieceUuid,
-                        pieceUuid,
-                        expandPartitons(newGameStateObject),
-                    ]);
-                    this.setActiveGameIndex(newGameIndex);
-                    this.botsTurn.trigger(!this.botsTurn.state)
+                const entries = Object.entries(newGameStateObject)
 
-                    console.log('Piece to move construction', newGameStateObject)
+                const entry1 = entries.find(x => changeDat.toPartition === x[1])
+                const entry2 = changeDat.samePartition
+                    ? null
+                    : entries.find(x => changeDat.fromPartition === x[1] && x[0] !== entry1[0])
+
+                newGameStateObject[entry1[0]] = changeDat.toPartitionNew
+                if (changeDat.twoChanges) newGameStateObject[entry2[0]] = changeDat.fromPartitionNew
+                else if (!changeDat.samePartition) {
+                    delete newGameStateObject[entry2[0]]
                 }
-                else {
-                    console.error('Symmetric changes failed')
-                    return;
+
+                console.log(newGameStateObject)
+
+                if (Object.values(expandPartitons(newGameStateObject)).reduce((acc, item) => {
+                    return acc += item.reduce((acc2, item2) => {
+                        return acc2 + (item2.number * item2.count)
+                    }, 0)
+                }, 0) !== 12) {
+                    console.error(expandPartitons(newGameStateObject))
+                    throw new Error()
                 }
+
+                this.gameStateObject.trigger(newGameStateObject);
+                this.selectedPieceIndex.trigger([undefined, undefined]);
+                this.moveUpdate.trigger([
+                    currentPieceUuid,
+                    pieceUuid,
+                    expandPartitons(newGameStateObject),
+                ]);
+                this.setActiveGameIndex(nextGameIndex);
+                this.botsTurn.trigger(!this.botsTurn.state)
             }
         }
         else this.selectedPieceIndex.trigger([

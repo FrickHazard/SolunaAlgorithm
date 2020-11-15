@@ -816,7 +816,27 @@ ChangeDat * doBackwardReconstruction(uint32_t gameIndex, uint32_t moveGameIndex)
     return  &DAT;
 }
 
-uint32_t doForwardReconstruction(uint32_t gameIndex, ChangeDat dat) {
+uint32_t doForwardReconstruction
+(
+ uint32_t gameIndex,
+ uint32_t pieceTopNumber,
+ uint32_t pieceTopCount,
+ uint32_t pieceBottomNumber,
+ uint32_t pieceBottomCount,
+ uint32_t toPartition,
+ uint32_t fromPartiton,
+ bool samePartition
+) {
+    ChangeDat dat = {
+        { pieceTopNumber, pieceTopCount },
+        { pieceBottomNumber, pieceBottomCount},
+        toPartition,
+        fromPartiton,
+        samePartition,
+        0,
+        0,
+        false
+    };
     return forward_reconstruction(gameIndex, dat);
 }
 
@@ -826,10 +846,15 @@ uint32_t doForwardReconstruction(uint32_t gameIndex, ChangeDat dat) {
 
 int main() {
     calculateAllGameStates(4, 12);
-    size_t a = sizeof(uint32_t);
+    uint32_t aaa = doForwardReconstruction(0, 1, 1, 1, 1, 66, 0, false);
+    ChangeDat bbb = backward_reconstruction(0,aaa);
     for (uint32_t i = 0; i < state.allGameStates.size(); ++i) {
         for (uint32_t j = 0; j < state.allMoves[i].size(); ++j) {
+            
+        
             ChangeDat dat = backward_reconstruction(i, state.allMoves[i][j]);
+            
+            assert(doForwardReconstruction(i, dat.pieceTop.number, dat.pieceTop.count, dat.pieceBottom.number, dat.pieceBottom.count, dat.toPartition, dat.fromPartiton, dat.samePartition) == state.allMoves[i][j]);
             assert(forward_reconstruction(i, dat) == state.allMoves[i][j]);
             {
                 std::vector<uint32_t> remove;
