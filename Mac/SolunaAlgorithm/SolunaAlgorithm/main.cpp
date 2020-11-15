@@ -846,8 +846,6 @@ uint32_t doForwardReconstruction
 
 int main() {
     calculateAllGameStates(4, 12);
-    uint32_t aaa = doForwardReconstruction(0, 1, 1, 1, 1, 66, 0, false);
-    ChangeDat bbb = backward_reconstruction(0,aaa);
     for (uint32_t i = 0; i < state.allGameStates.size(); ++i) {
         for (uint32_t j = 0; j < state.allMoves[i].size(); ++j) {
             

@@ -7,12 +7,6 @@ const botSystem = {
             const gameStateIndex = GameState.activeGameIndex.state[0];
             const nextPossibleGameStateIndices = Interopt.getNextPossibleGameStateIndices(gameStateIndex);
             if (nextPossibleGameStateIndices.length === 0) {
-                GameState.initialGamesIndices.state.sort(() => Math.random() - 0.5);
-                // function shuffle(array) {
-                //     array.sort(() => Math.random() - 0.5);
-                //   }
-                GameState.resetBoard(GameState.initialGamesIndices.state[0][0]);
-                GameState.startGame({ playerGoesFirst: false })
                 return
             }
             let highestBranchCountForOpponentToMakeMistake = 0;

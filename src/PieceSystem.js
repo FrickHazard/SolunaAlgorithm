@@ -41,10 +41,12 @@ class PieceHighlightSubystem {
         this.ignoreSubscriptions = [];
         this.group = new Group();
     }
+
     clear() {
         this.ignoreSubscriptions.forEach(f => f());
         this.group.children = [];
     }
+
     setSelectionVisuals(params, pieceVisuals) {
         this.clear();
         const [selectionBlock] = params;
@@ -98,6 +100,7 @@ export class PieceSystem {
             this.piecePositions.sort(() => Math.random() - 0.5);
         }
     }
+
     clearSubsOnBotTurn(botsTurn) {
         if (botsTurn) {
             this.subscriptions.forEach(f => f());
@@ -105,6 +108,7 @@ export class PieceSystem {
             this.resetSubs([undefined, undefined])
         }
     }
+
     resetSubs(params) {
         const [selectionBlock] = params;
 
@@ -198,15 +202,18 @@ export class PieceSystem {
     }
 
     applyMove([topPieceUuid, bottomPieceUuid, gameStateObj]) {
+        if (Object.values(gameStateObj).reduce((acc, item) => {
+            return acc += item.reduce((acc2, item2) => {
+                return acc2 + (item2.number * item2.count)
+            }, 0)
+        }, 0) !== 12) {
+            console.error(gameStateObj)
+            throw new Error()
+        }
         const newPieceVisuals = [];
         let newHeight
         let topColorIndex
 
-
-
-        console.log(topPieceUuid, bottomPieceUuid)
-        console.log('Game State: ', gameStateObj)
-        console.log('Visuals: ', this.pieceVisuals.map(x => ({ ...x.userData })))
         if (isObject(topPieceUuid)) {
             newHeight = topPieceUuid.height + bottomPieceUuid.height
             topColorIndex = topPieceUuid.topColorIndex
@@ -250,11 +257,5 @@ export class PieceSystem {
         this.group.children = [];
         this.group.add(this.highlightSystem.group);
         this.pieceVisuals.forEach(x => this.group.add(x))
-
-        if (this.pieceVisuals.reduce((acc, item) => {
-            return acc += item.userData.height
-        }, 0) !== 12) {
-            throw new Error()
-        }
     }
 }

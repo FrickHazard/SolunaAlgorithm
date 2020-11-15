@@ -104,9 +104,7 @@ const interopt = {
     },
 
     doForwardReconstruction(gameId, dat) {
-        console.log(gameId, dat.pieceTop.number, 1, dat.pieceBottom.number, 1, dat.toPartition, dat.fromPartition, dat.samePartition)
         const gameIndex = Module._doForwardReconstruction(gameId, dat.pieceTop.number, 1, dat.pieceBottom.number, 1, dat.toPartition, dat.fromPartition, dat.samePartition);
-        console.log(gameIndex)
         return gameIndex
     },
 
