@@ -19,6 +19,7 @@ import rough from "./assets/White_Marble_004_SD/White_Marble_004_ROUGH.jpg";
 import { SelectionPiece } from './visuals/selectionPiece';
 import GameState from './GameState';
 import SelectionSystem from './SelectionSystem';
+import { CurveSystem } from './visuals/curves'
 
 function isObject(obj) {
     return obj === Object(obj);
@@ -79,6 +80,7 @@ class PieceHighlightSubystem {
 
 export class PieceSystem {
     constructor() {
+        this.curveSystem = new CurveSystem();
         this.highlightSystem = new PieceHighlightSubystem();
         this.group = new Group();
         this.pieceVisuals = [];
@@ -143,6 +145,7 @@ export class PieceSystem {
         this.subscriptions.forEach(f => f());
         this.group.children = [];
         this.group.add(this.highlightSystem.group);
+        this.group.add(this.curveSystem);
 
         this.labelMaterial = new MeshStandardMaterial({
             color: 0xff5f00,
@@ -214,10 +217,13 @@ export class PieceSystem {
         let newHeight
         let topColorIndex
 
+        let topPieceVisual
         if (isObject(topPieceUuid)) {
+            topPieceVisual = this.pieceVisuals.find(x => x.userData.height === topPieceUuid.height && x.userData.colorIndex === topPieceUuid.topColorIndex);
             newHeight = topPieceUuid.height + bottomPieceUuid.height
             topColorIndex = topPieceUuid.topColorIndex
         } else {
+            topPieceVisual = this.pieceVisuals.find(x => x.uuid === topPieceUuid)
             newHeight = this.pieceVisuals.find(x => x.uuid === topPieceUuid).userData.height +
                 this.pieceVisuals.find(x => x.uuid === bottomPieceUuid).userData.height;
 
@@ -252,6 +258,8 @@ export class PieceSystem {
                 }
             }
         }
+
+        this.curveSystem.addCurve(bottomPieceVisual.position, topPieceVisual.position)
 
         this.pieceVisuals = newPieceVisuals;
         this.group.children = [];

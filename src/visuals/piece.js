@@ -1,7 +1,4 @@
-import {
-    Mesh,
-    Vector3
-} from 'three';
+import { Mesh, Vector3 } from 'three';
 
 export class Piece extends Mesh {
     constructor(options) {
@@ -11,7 +8,7 @@ export class Piece extends Mesh {
 
         this.setHeight(options.height);
     }
-    
+
     setHeight(height) {
         this.position.setY(0);
         this.children = this.children.filter(x => x === this.label);
@@ -30,9 +27,9 @@ export class Piece extends Mesh {
             labelMaterial
         );
 
-        this.label.rotateX(-Math.PI /2);
+        this.label.rotateX(-Math.PI / 2);
         this.attach(this.label);
-        this.label.position.set(0,1.0,0);
+        this.label.position.set(0, 1.0, 0);
     }
 
     setPostition(vec2) {

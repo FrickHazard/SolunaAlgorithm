@@ -2,66 +2,56 @@ import {
     Scene,
     PerspectiveCamera,
     WebGLRenderer,
-    BoxGeometry,
-    MeshBasicMaterial,
-    Mesh,
-    MeshStandardMaterial,
     DirectionalLight,
-    BackSide,
-    TextureLoader,
     Fog,
-    CylinderGeometry,
-    RepeatWrapping,
     PointLight,
     AmbientLight,
-    Vector2,
-    Vector3,
-    Shape,
-    FontLoader,
-    ShapeGeometry,
-    TextBufferGeometry,
-    Font
 } from 'three';
 // for gpu picker
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-import { Pillar} from './visuals/pillar';
+import { Pillar } from './visuals/pillar';
 import { Skybox } from './visuals/skybox';
 import { PieceSystem } from './PieceSystem';
 import SelectionSystem from './SelectionSystem';
 
 export const initThree = (domElement) => {
-    const rect = domElement.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-
-    const scene =  new Scene();
+    const scene = new Scene();
     const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 30000);
     const renderer = new WebGLRenderer();
 
-    renderer.setSize( window.innerWidth, window.innerHeight);
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    window.addEventListener('resize', onWindowResize, false);
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
     SelectionSystem.init(renderer, scene, camera);
 
     domElement.appendChild(renderer.domElement);
 
-    const controls = new OrbitControls( camera, renderer.domElement );
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enablePan = false;
     // 26 = radius of piller + 1
     controls.minDistance = 26;
     controls.maxDistance = 100;
     controls.maxPolarAngle = (Math.PI / 2 - 0.2);
     camera.position.z = 26;
-    controls.update();    
+    controls.update();
 
     scene.add(new Pillar());
     scene.add(new Skybox());
 
     // light
     {
-        const directionalLight = new DirectionalLight( 0xffffff, 1. );
+        const directionalLight = new DirectionalLight(0xffffff, 1.);
         directionalLight.rotateY(0.1);
         directionalLight.rotateZ(0.5);
-        scene.add( directionalLight );
+        scene.add(directionalLight);
 
         const pointLight = new PointLight(0x102030, 7, 30, 1);
         pointLight.translateY(10);
@@ -75,17 +65,17 @@ export const initThree = (domElement) => {
     {
         scene.fog = new Fog(0x000000, 1, 800);
     }
- 
+
     const pieceSystem = new PieceSystem();
     scene.add(pieceSystem.group);
 
     // animate
     const animate = function () {
-        requestAnimationFrame( animate );
+        requestAnimationFrame(animate);
 
         controls.update();
 
-        renderer.render( scene, camera );
+        renderer.render(scene, camera);
     };
 
     animate();

@@ -848,8 +848,6 @@ int main() {
     calculateAllGameStates(4, 12);
     for (uint32_t i = 0; i < state.allGameStates.size(); ++i) {
         for (uint32_t j = 0; j < state.allMoves[i].size(); ++j) {
-            
-        
             ChangeDat dat = backward_reconstruction(i, state.allMoves[i][j]);
             
             assert(doForwardReconstruction(i, dat.pieceTop.number, dat.pieceTop.count, dat.pieceBottom.number, dat.pieceBottom.count, dat.toPartition, dat.fromPartiton, dat.samePartition) == state.allMoves[i][j]);

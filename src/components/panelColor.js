@@ -1,0 +1,1 @@
+export const panelColor = '#666699';
