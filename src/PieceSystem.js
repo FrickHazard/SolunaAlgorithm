@@ -7,6 +7,7 @@ import {
     Color,
     CylinderGeometry,
     TextGeometry,
+    Vector3,
 } from 'three';
 import { Piece } from './visuals/piece';
 import helevetikerFont from './assets/helvetiker_bold.typeface.json';
@@ -53,6 +54,8 @@ class PieceHighlightSubystem {
         const [selectionBlock] = params;
         if (!selectionBlock) return;
 
+        const mistakes = params[1]
+        console.log(mistakes)
         const [, , selectedVisualUuid] = selectionBlock;
 
         const selectedVisual = pieceVisuals.find(x => x.uuid === selectedVisualUuid)
@@ -68,7 +71,11 @@ class PieceHighlightSubystem {
                 this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[1]));
             }
             else if (pieceVisual.userData.colorIndex === colorIndex || pieceVisual.userData.height === height) {
-                const selectedPieceVisual = new SelectionPiece(new Color(0x00ff00));
+                let color = 0x00ff00
+                if (mistakes[pieceVisual.userData.colorIndex].find(x => x === pieceVisual.userData.height)) {
+                    color = 0xffaa00
+                }
+                const selectedPieceVisual = new SelectionPiece(new Color(color));
                 selectedPieceVisual.setFromPiece(pieceVisual);
                 this.group.add(selectedPieceVisual);
                 this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[0]));
@@ -232,10 +239,11 @@ export class PieceSystem {
 
         let bottomPieceVisual
         if (isObject(topPieceUuid)) {
-            bottomPieceVisual = this.pieceVisuals.find(x => x.userData.height === bottomPieceUuid.height && x.userData.colorIndex === bottomPieceUuid.bottomColorIndex);
+            bottomPieceVisual = this.pieceVisuals.find(x => x.uuid !== topPieceVisual.uuid && x.userData.height === bottomPieceUuid.height && x.userData.colorIndex === bottomPieceUuid.bottomColorIndex);
         } else {
             bottomPieceVisual = this.pieceVisuals.find(x => x.uuid === bottomPieceUuid);
         }
+
         bottomPieceVisual.setHeight(newHeight);
         bottomPieceVisual.setLabel(this.labelGeometries[topColorIndex], this.labelMaterial);
         bottomPieceVisual.userData = { colorIndex: topColorIndex, height: newHeight };
@@ -259,11 +267,15 @@ export class PieceSystem {
             }
         }
 
-        this.curveSystem.addCurve(bottomPieceVisual.position, topPieceVisual.position)
+        this.curveSystem.addCurve(
+            bottomPieceVisual.position.clone().add(new Vector3(0, 1, 0)),
+            topPieceVisual.position.clone().setY(0)
+        )
 
         this.pieceVisuals = newPieceVisuals;
         this.group.children = [];
         this.group.add(this.highlightSystem.group);
+        this.group.add(this.curveSystem);
         this.pieceVisuals.forEach(x => this.group.add(x))
     }
 }

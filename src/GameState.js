@@ -41,12 +41,40 @@ const expandPartitons = (gameStateObject) => {
     return result;
 }
 
-const getGetValidMoveToPiecesNoSymmetry = ([colorIndex, height], expandedGameState) => {
-    const result = [];
-    for (let i = 0; i < expandedGameState.length; ++i) {
-        for (let j = 0; j < expandedGameState[i].length; ++j) {
-            if (i === colorIndex || expandedGameState[i][j].number === height) {
-                result.push({ colorIndex: i, height: expandedGameState[i][j].number });
+const getNextGameIndexFromMove = (gameStateObject, aciveGameIndex, top, bottom) => {
+    console.log(gameStateObject, aciveGameIndex, top, bottom)
+    return Interopt.doForwardReconstruction(aciveGameIndex, {
+        pieceTop: {
+            number: top.number
+        },
+        pieceBottom: {
+            number: bottom.number,
+        },
+        toPartition: gameStateObject[top.colorIndex],
+        fromPartition: gameStateObject[bottom.colorIndex],
+        samePartition: (top.colorIndex === bottom.colorIndex)
+    })
+}
+
+const getMistakeMoves = ([colorIndex, height], gameIndex, gameStateObject) => {
+    const keys = Object.keys(gameStateObject)
+    const result = {};
+    for (let i = 0; i < keys.length; ++i) {
+        const key = Number(keys[i])
+        result[key] = []
+        const partition = Interopt.getPartition(gameStateObject[key])
+        for (let j = 0; j < partition.length; ++j) {
+            if (
+                (key === colorIndex || partition[j].number === height)
+                && !(key === colorIndex && partition[j].number === height && partition[j].count === 1)
+            ) {
+                const nextGameId = getNextGameIndexFromMove(gameStateObject, gameIndex,
+                    { colorIndex, number: height },
+                    { colorIndex: key, number: partition[j].number })
+
+                const mistake = Interopt.getBranchResult(gameIndex).guaranteedWin && Interopt.getBranchResult(nextGameId).guaranteedWin
+
+                if (mistake) result[key].push(partition[j].number);
             }
         }
     }
@@ -104,7 +132,7 @@ const gameState = {
         }
         else this.selectedPieceIndex.trigger([
             [colorIndex, height, pieceUuid],
-            getGetValidMoveToPiecesNoSymmetry([colorIndex, height], this.activeGameIndex.state[1])
+            getMistakeMoves([colorIndex, height], this.activeGameIndex.state[0], this.gameStateObject.state)
         ]);
     },
     resetBoard(gameIndex) {

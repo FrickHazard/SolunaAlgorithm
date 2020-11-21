@@ -5,6 +5,7 @@ import { InitialStateList } from './InitialStateList.jsx'
 import { WhiteText } from './WhiteText.jsx'
 import { TurnDisplay } from './TurnDisplay.jsx'
 import { panelColor } from './panelColor'
+import { LeftPanel } from './LeftPanel.jsx'
 
 export const MainPage = (props) => {
     const [menuState, setMenuState] = useState(GameState.menu.state)
@@ -84,5 +85,6 @@ export const MainPage = (props) => {
                 : null
         }
         <TurnDisplay botsTurn={botsTurn} />
+        {/* <LeftPanel /> */}
     </div>
 };
