@@ -22,10 +22,6 @@ import GameState from './GameState';
 import SelectionSystem from './SelectionSystem';
 import { CurveSystem } from './visuals/curves'
 
-function isObject(obj) {
-    return obj === Object(obj);
-}
-
 const textureLoader = new TextureLoader();
 const diffuseMap = textureLoader.load(diffuse);
 const bumpMap = textureLoader.load(ambientOcclusion);
@@ -49,30 +45,26 @@ class PieceHighlightSubystem {
         this.group.children = [];
     }
 
-    setSelectionVisuals(params, pieceVisuals) {
+    setHighlights(selectionState, pieceVisuals) {
         this.clear();
-        const [selectionBlock] = params;
-        if (!selectionBlock) return;
-
-        const mistakes = params[1]
-        console.log(mistakes)
-        const [, , selectedVisualUuid] = selectionBlock;
-
-        const selectedVisual = pieceVisuals.find(x => x.uuid === selectedVisualUuid)
-        const colorIndex = selectedVisual.userData.colorIndex;
-        const height = selectedVisual.userData.height;
+        if (!selectionState) return;
 
         for (const pieceVisual of pieceVisuals) {
-            if (pieceVisual.uuid === selectedVisualUuid) {
+            const move = selectionState.moves.find(
+                x => pieceVisual.userData.colorIndex === x.colorIndex
+                    && pieceVisual.userData.partitionIndex === x.partitionIndex)
+            if (pieceVisual.userData.colorIndex === selectionState.colorIndex &&
+                pieceVisual.userData.partitionIndex === selectionState.partitionIndex
+            ) {
                 const selectedPieceVisual = new SelectionPiece(new Color(0xff00ff));
                 selectedPieceVisual.setFromPiece(pieceVisual);
                 this.group.add(selectedPieceVisual);
                 this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[0]));
                 this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[1]));
             }
-            else if (pieceVisual.userData.colorIndex === colorIndex || pieceVisual.userData.height === height) {
+            else if (move) {
                 let color = 0x00ff00
-                if (mistakes[pieceVisual.userData.colorIndex].find(x => x === pieceVisual.userData.height)) {
+                if (move.mistake) {
                     color = 0xffaa00
                 }
                 const selectedPieceVisual = new SelectionPiece(new Color(color));
@@ -92,65 +84,53 @@ export class PieceSystem {
         this.group = new Group();
         this.pieceVisuals = [];
         this.subscriptions = [];
-        GameState.resetBoardUpdate.subscribe((st) => this.resetBoard(st));
-        GameState.moveUpdate.subscribe(this.applyMove.bind(this));
-        GameState.selectedPieceIndex.subscribe((st) => this.highlightSystem.setSelectionVisuals(st, this.pieceVisuals));
-        GameState.selectedPieceIndex.subscribe(this.resetSubs.bind(this));
+        GameState.gameStateObject.subscribe(this.setVisuals.bind(this));
+        GameState.selectedPieceData.subscribe((st) => this.highlightSystem.setHighlights(st, this.pieceVisuals));
+        GameState.selectedPieceData.subscribe(this.resetSubs.bind(this));
         GameState.botsTurn.subscribe(this.clearSubsOnBotTurn.bind(this))
-        {
-            this.piecePositions = [];
-            const ratio = 50 / 4;
-            for (let x = 3; x < ratio - 2; ++x) {
-                for (let y = 3; y < ratio - 2; ++y) {
-                    if ((x + y) % 2 == 0) continue;
-                    this.piecePositions.push(new Vector2((x - (ratio / 2)) * 4 - 1, (y - (ratio / 2)) * 4 - 1));
-                }
-            }
-            this.piecePositions.sort(() => Math.random() - 0.5);
-        }
     }
 
     clearSubsOnBotTurn(botsTurn) {
         if (botsTurn) {
             this.subscriptions.forEach(f => f());
         } else {
-            this.resetSubs([undefined, undefined])
+            this.resetSubs(undefined)
         }
     }
 
-    resetSubs(params) {
-        const [selectionBlock] = params;
-
+    resetSubs(selectionState) {
         this.subscriptions.forEach(f => f());
         this.subscriptions = [];
 
-        if (!selectionBlock) {
+        if (GameState.menu.state !== 'none') return
+
+        if (!selectionState) {
             for (const pieceVisual of this.pieceVisuals) {
                 this.subscriptions.push(SelectionSystem.subscribeToSelect(pieceVisual,
-                    () => GameState.setSelectedPiece([pieceVisual.userData.colorIndex, pieceVisual.userData.height, pieceVisual.uuid])));
+                    () => GameState.selectPiece({ ...pieceVisual.userData })));
             }
             return;
         }
-        const [, , selectedVisualUuid] = selectionBlock;
-        const selectedVisual = this.pieceVisuals.find(x => x.uuid === selectedVisualUuid)
-        const colorIndex = selectedVisual.userData.colorIndex;
-        const height = selectedVisual.userData.height;
 
         for (const pieceVisual of this.pieceVisuals) {
             if (
-                selectedVisualUuid === pieceVisual.id
-                || pieceVisual.userData.colorIndex === colorIndex
-                || pieceVisual.userData.height === height
+                selectionState.moves.find(
+                    x => pieceVisual.userData.colorIndex === x.colorIndex
+                        && pieceVisual.userData.partitionIndex === x.partitionIndex)
+                || (pieceVisual.userData.colorIndex === selectionState.colorIndex
+                    && pieceVisual.userData.partitionIndex === selectionState.partitionIndex)
             ) {
                 this.subscriptions.push(SelectionSystem.subscribeToSelect(pieceVisual,
-                    () => GameState.setSelectedPiece([pieceVisual.userData.colorIndex, pieceVisual.userData.height, pieceVisual.uuid])));
+                    () => GameState.selectPiece({ ...pieceVisual.userData })));
             }
         }
     }
 
-    resetBoard(gameStateObj) {
+    setVisuals(gameStateObj) {
         this.subscriptions.forEach(f => f());
         this.group.children = [];
+        console.log(gameStateObj)
+        if (!gameStateObj) return
         this.group.add(this.highlightSystem.group);
         this.group.add(this.curveSystem);
 
@@ -160,7 +140,7 @@ export class PieceSystem {
         });
 
         this.labelGeometries = {};
-        const pieceMaterial = new MeshStandardMaterial({
+        this.pieceMaterial = new MeshStandardMaterial({
             // color: 0xffffff,
             // emissive: 0x111111,
             map: diffuseMap,
@@ -183,99 +163,28 @@ export class PieceSystem {
             this.labelGeometries[key].computeBoundingBox();
             this.labelGeometries[key].center();
         }
-
+        // divide ---
         this.pieceVisuals = [];
-        let i = 0;
         for (const key of Object.keys(gameStateObj)) {
             const colorIndex = Number(key);
-            const partition = gameStateObj[key];
-            for (const partitionNumb of partition) {
-                for (let k = 0; k < partitionNumb.count; ++k) {
-                    const piece = new Piece({
-                        pieceGeometry: cylinderGeo,
-                        pieceMaterial: pieceMaterial,
-                        labelMaterial: this.labelMaterial,
-                        labelGeometry: this.labelGeometries[colorIndex],
-                        height: partitionNumb.number
-                    });
-                    piece.userData = {
-                        colorIndex,
-                        height: partitionNumb.number
-                    };
-                    this.group.add(piece);
-                    piece.setPostition(this.piecePositions[i], 0);
-                    this.pieceVisuals.push(piece);
-                    i++;
-                }
+            const partition = gameStateObj[key].partition;
+            for (let i = 0; i < partition.length; ++i) {
+                const pieceData = partition[i]
+                const piece = new Piece({
+                    pieceGeometry: cylinderGeo,
+                    pieceMaterial: this.pieceMaterial,
+                    labelMaterial: this.labelMaterial,
+                    labelGeometry: this.labelGeometries[colorIndex],
+                    height: pieceData.number
+                });
+                piece.userData = {
+                    colorIndex,
+                    partitionIndex: i,
+                };
+                this.group.add(piece);
+                piece.setPostition(new Vector2(pieceData.pos.x, pieceData.pos.y), 0);
+                this.pieceVisuals.push(piece);
             }
         }
-    }
-
-    applyMove([topPieceUuid, bottomPieceUuid, gameStateObj]) {
-        if (Object.values(gameStateObj).reduce((acc, item) => {
-            return acc += item.reduce((acc2, item2) => {
-                return acc2 + (item2.number * item2.count)
-            }, 0)
-        }, 0) !== 12) {
-            console.error(gameStateObj)
-            throw new Error()
-        }
-        const newPieceVisuals = [];
-        let newHeight
-        let topColorIndex
-
-        let topPieceVisual
-        if (isObject(topPieceUuid)) {
-            topPieceVisual = this.pieceVisuals.find(x => x.userData.height === topPieceUuid.height && x.userData.colorIndex === topPieceUuid.topColorIndex);
-            newHeight = topPieceUuid.height + bottomPieceUuid.height
-            topColorIndex = topPieceUuid.topColorIndex
-        } else {
-            topPieceVisual = this.pieceVisuals.find(x => x.uuid === topPieceUuid)
-            newHeight = this.pieceVisuals.find(x => x.uuid === topPieceUuid).userData.height +
-                this.pieceVisuals.find(x => x.uuid === bottomPieceUuid).userData.height;
-
-            topColorIndex = this.pieceVisuals.find(x => x.uuid === topPieceUuid).userData.colorIndex;
-        }
-
-        let bottomPieceVisual
-        if (isObject(topPieceUuid)) {
-            bottomPieceVisual = this.pieceVisuals.find(x => x.uuid !== topPieceVisual.uuid && x.userData.height === bottomPieceUuid.height && x.userData.colorIndex === bottomPieceUuid.bottomColorIndex);
-        } else {
-            bottomPieceVisual = this.pieceVisuals.find(x => x.uuid === bottomPieceUuid);
-        }
-
-        bottomPieceVisual.setHeight(newHeight);
-        bottomPieceVisual.setLabel(this.labelGeometries[topColorIndex], this.labelMaterial);
-        bottomPieceVisual.userData = { colorIndex: topColorIndex, height: newHeight };
-        newPieceVisuals.push(bottomPieceVisual);
-
-        for (const key of Object.keys(gameStateObj)) {
-            let colorIndex = Number(key);
-            const partition = gameStateObj[key];
-            for (const partitionNumb of partition) {
-                const visuals = this.pieceVisuals.filter(x =>
-                    x.userData.colorIndex === colorIndex
-                    && x.userData.height === partitionNumb.number)
-
-                let c = 0
-                for (const pieceVisual of visuals) {
-                    if (c < partitionNumb.count && pieceVisual.uuid !== topPieceUuid && pieceVisual.uuid !== bottomPieceVisual.uuid) {
-                        newPieceVisuals.push(pieceVisual);
-                        ++c;
-                    }
-                }
-            }
-        }
-
-        this.curveSystem.addCurve(
-            bottomPieceVisual.position.clone().add(new Vector3(0, 1, 0)),
-            topPieceVisual.position.clone().setY(0)
-        )
-
-        this.pieceVisuals = newPieceVisuals;
-        this.group.children = [];
-        this.group.add(this.highlightSystem.group);
-        this.group.add(this.curveSystem);
-        this.pieceVisuals.forEach(x => this.group.add(x))
     }
 }

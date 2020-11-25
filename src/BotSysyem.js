@@ -6,7 +6,7 @@ const botSystem = {
         if (botsTurn) {
             setTimeout(() => {
                 if (!GameState.botsTurn.state) return
-                const gameStateIndex = GameState.activeGameIndex.state[0];
+                const gameStateIndex = GameState.activeGameIndex.state;
                 const nextPossibleGameStateIndices = Interopt.getNextPossibleGameStateIndices(gameStateIndex);
                 if (nextPossibleGameStateIndices.length === 0) {
                     return

@@ -9,13 +9,15 @@ import Bot from './BotSysyem';
 initThree(document.body);
 
 Interopt.onLoad(() => {
-    Interopt.init(4, 12)
+    const pieceCount = 12
+    Interopt.init(4, pieceCount)
+    GameState.setRandomBoardPositions(pieceCount)
     GameState.setInitialGameStateIndices();
     Bot.init()
 });
 
 const App = () => {
-    return  <MainPage/>
+    return <MainPage />
 }
 
 const wrapper = document.getElementById("container");

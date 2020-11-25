@@ -33,16 +33,19 @@ class Sub {
     }
 }
 
-const expandPartitons = (gameStateObject) => {
-    const result = {};
-    for (const key of Object.keys(gameStateObject)) {
-        result[key] = Interopt.getPartition(gameStateObject[key])
-    }
-    return result;
-}
+// const expandPartition = (partitionId) => {
+//     const expandedPartition = []
+//     const partition = Interopt.getPartition(partitionId);
+//     for (let i = 0; i < partition.length; ++i) {
+//         for (let j = 0; j < partition[i].count; ++j) {
+//             expandedPartition.push({ number: partition[i].number, pos: this.boardPositions.state[pieceIndex] });
+//             ++pieceIndex;
+//         }
+//     }
+//     return expandedPartition
+// }
 
 const getNextGameIndexFromMove = (gameStateObject, aciveGameIndex, top, bottom) => {
-    console.log(gameStateObject, aciveGameIndex, top, bottom)
     return Interopt.doForwardReconstruction(aciveGameIndex, {
         pieceTop: {
             number: top.number
@@ -50,153 +53,203 @@ const getNextGameIndexFromMove = (gameStateObject, aciveGameIndex, top, bottom) 
         pieceBottom: {
             number: bottom.number,
         },
-        toPartition: gameStateObject[top.colorIndex],
-        fromPartition: gameStateObject[bottom.colorIndex],
+        toPartition: gameStateObject[top.colorIndex].id,
+        fromPartition: gameStateObject[bottom.colorIndex].id,
         samePartition: (top.colorIndex === bottom.colorIndex)
     })
 }
 
-const getMistakeMoves = ([colorIndex, height], gameIndex, gameStateObject) => {
+const getMoves = ({ colorIndex, partitionIndex }, gameIndex, gameStateObject) => {
+    const pieceHeight = gameStateObject[colorIndex].partition[partitionIndex].number;
     const keys = Object.keys(gameStateObject)
-    const result = {};
+    const moves = [];
     for (let i = 0; i < keys.length; ++i) {
         const key = Number(keys[i])
-        result[key] = []
-        const partition = Interopt.getPartition(gameStateObject[key])
-        for (let j = 0; j < partition.length; ++j) {
+        for (let j = 0; j < gameStateObject[key].partition.length; ++j) {
             if (
-                (key === colorIndex || partition[j].number === height)
-                && !(key === colorIndex && partition[j].number === height && partition[j].count === 1)
+                (key === colorIndex || gameStateObject[key].partition[j].number === pieceHeight) &&
+                !(key === colorIndex && j === partitionIndex)
             ) {
                 const nextGameId = getNextGameIndexFromMove(gameStateObject, gameIndex,
-                    { colorIndex, number: height },
-                    { colorIndex: key, number: partition[j].number })
+                    { colorIndex, number: pieceHeight },
+                    { colorIndex: key, number: gameStateObject[key].partition[j].number })
 
                 const mistake = Interopt.getBranchResult(gameIndex).guaranteedWin && Interopt.getBranchResult(nextGameId).guaranteedWin
 
-                if (mistake) result[key].push(partition[j].number);
+                moves.push({ colorIndex: key, partitionIndex: j, mistake })
             }
         }
     }
-    return result;
+    return moves;
 }
 
 const gameState = {
     menu: new Sub('initial-conditions'),
-    selectedPieceIndex: new Sub(),
+    selectedPieceData: new Sub(),
     activeGameIndex: new Sub(),
+    // selector of active gameIndex
+    activeGameBranchResult: new Sub(),
     initialGamesIndices: new Sub(),
-    moveUpdate: new Sub(),
-    resetBoardUpdate: new Sub(),
     gameStateObject: new Sub(),
     botsTurn: new Sub(),
-    setSelectedPiece([colorIndex, height, pieceUuid]) {
-        if (this.selectedPieceIndex.state[0] !== undefined) {
-            const [currentColorIndex, currentHeight, currentPieceUuid] = this.selectedPieceIndex.state[0];
-            if (pieceUuid === currentPieceUuid) {
-                this.selectedPieceIndex.trigger([undefined, undefined]);
+    boardPositions: new Sub(),
+    history: new Sub(),
+    selectPiece({ colorIndex, partitionIndex }) {
+        if (this.selectedPieceData.state !== undefined) {
+            const { colorIndex: topColorIndex, partitionIndex: topPartitionIndex } = this.selectedPieceData.state;
+            if (topColorIndex === colorIndex && partitionIndex === topPartitionIndex) {
+                this.selectedPieceData.trigger(undefined);
             } else {
+                const topPieceHeight = this.gameStateObject.state[topColorIndex].partition[topPartitionIndex].number
+                const bottomPieceHeight = this.gameStateObject.state[colorIndex].partition[partitionIndex].number
+                const bottomPos = this.gameStateObject.state[colorIndex].partition[partitionIndex].pos
+                const nextGameIndex = getNextGameIndexFromMove(
+                    this.gameStateObject.state,
+                    this.activeGameIndex.state,
+                    {
+                        number: topPieceHeight,
+                        colorIndex: topColorIndex
+                    },
+                    {
+                        number: bottomPieceHeight,
+                        colorIndex
+                    })
+
+                const changeDat = Interopt.doBackwardReconstruction(this.activeGameIndex.state, nextGameIndex)
+
                 const newGameStateObject = { ...this.gameStateObject.state }
 
-                const nextGameIndex = Interopt.doForwardReconstruction(this.activeGameIndex.state[0], {
-                    pieceTop: {
-                        number: currentHeight
-                    },
-                    pieceBottom: {
-                        number: height,
-                    },
-                    toPartition: this.gameStateObject.state[currentColorIndex],
-                    fromPartition: this.gameStateObject.state[colorIndex],
-                    samePartition: (currentColorIndex === colorIndex)
-                })
-
-                const changeDat = Interopt.doBackwardReconstruction(this.activeGameIndex.state[0], nextGameIndex)
-
-                newGameStateObject[currentColorIndex] = changeDat.toPartitionNew
+                newGameStateObject[topColorIndex].partition[topPartitionIndex].number = topPieceHeight + bottomPieceHeight;
+                // remove top onto bottom's position
+                newGameStateObject[topColorIndex].partition[topPartitionIndex].pos = bottomPos
+                newGameStateObject[topColorIndex].id = changeDat.toPartitionNew
+                newGameStateObject[colorIndex].partition.splice(partitionIndex, 1)
                 if (changeDat.twoChanges) {
-                    newGameStateObject[colorIndex] = changeDat.fromPartitionNew
+                    newGameStateObject[colorIndex].id = changeDat.fromPartitionNew
                 } else if (!changeDat.samePartition) {
-                    delete newGameStateObject[colorIndex]
+                    delete newGameStateObject[colorIndex];
                 }
 
                 this.gameStateObject.trigger(newGameStateObject);
-                this.selectedPieceIndex.trigger([undefined, undefined]);
-                this.moveUpdate.trigger([
-                    currentPieceUuid,
-                    pieceUuid,
-                    expandPartitons(newGameStateObject),
-                ]);
+                this.selectedPieceData.trigger(undefined);
                 this.setActiveGameIndex(nextGameIndex);
                 this.botsTurn.trigger(!this.botsTurn.state)
             }
+        } else {
+            this.selectedPieceData.trigger({
+                colorIndex,
+                partitionIndex,
+                moves: getMoves({ colorIndex, partitionIndex }, this.activeGameIndex.state, this.gameStateObject.state)
+            })
         }
-        else this.selectedPieceIndex.trigger([
-            [colorIndex, height, pieceUuid],
-            getMistakeMoves([colorIndex, height], this.activeGameIndex.state[0], this.gameStateObject.state)
-        ]);
     },
-    resetBoard(gameIndex) {
+    setBoardFromInitialGameIndex(gameIndex) {
         const gameState = Array.from(Interopt.getGameState(gameIndex))
 
         const gameStateObject = {};
-        for (let i = 0; i < gameState.length; ++i)
-            gameStateObject[i] = gameState[i]
+        let pieceIndex = 0;
+        for (let i = 0; i < gameState.length; ++i) {
+            gameStateObject[i] = { id: gameState[i], partition: [] };
+            const partition = Interopt.getPartition(gameState[i]);
+            for (let j = 0; j < partition.length; ++j) {
+                for (let k = 0; k < partition[j].count; ++k) {
+                    gameStateObject[i].partition.push({ number: partition[j].number, pos: this.boardPositions.state[pieceIndex] });
+                    ++pieceIndex;
+                }
+            }
+        }
 
         this.setActiveGameIndex(gameIndex);
         this.gameStateObject.trigger(gameStateObject);
-        this.resetBoardUpdate.trigger(expandPartitons(gameStateObject));
+        this.selectedPieceData.trigger(undefined);
     },
     setActiveGameIndex(gameIndex) {
-        this.activeGameIndex.trigger([gameIndex, Interopt.getGameStateExpandedToPartitions(gameIndex), Interopt.getBranchResult(gameIndex)]);
+        this.activeGameIndex.trigger(gameIndex);
+        if (gameIndex !== undefined) {
+            const branchResult = Interopt.getBranchResult(gameIndex)
+            if (branchResult.leafCount === 0) {
+                this.menu.trigger('game-over')
+            }
+            this.activeGameBranchResult.trigger(branchResult)
+            if (this.history.state) {
+                this.history.trigger([...this.history.state, {
+                    gameIndex,
+                    branchResult,
+                    //TODO horrendous lazy deep clone
+                    gameStateObject: JSON.parse(JSON.stringify(this.gameStateObject.state)),
+                }])
+            }
+        }
+    },
+    restart() {
+        this.setActiveGameIndex(undefined)
+        this.gameStateObject.trigger(undefined);
+        this.history.trigger(undefined)
+        this.menu.trigger('initial-conditions');
+        this.botsTurn.trigger(undefined);
     },
     setInitialGameStateIndices() {
         this.initialGamesIndices.trigger(Interopt.getInitialStates());
     },
-    menuSetState(st) {
-        this.menu.trigger(st);
-    },
     startGame({ playerGoesFirst }) {
         this.menu.trigger('none')
-        this.selectedPieceIndex.trigger([undefined, undefined]);
+        this.selectedPieceData.trigger(undefined);
         this.botsTurn.trigger(!playerGoesFirst)
+        this.history.trigger([{
+            gameIndex: this.activeGameIndex.state,
+            // horrendous lazy deep clone
+            gameStateObject: JSON.parse(JSON.stringify(this.gameStateObject.state)),
+            branchResult: { ...this.activeGameBranchResult.state },
+        }])
     },
     makeSymmetricMove(newGameIndex) {
-        const changeDat = Interopt.doBackwardReconstruction(this.activeGameIndex.state[0], newGameIndex)
+        const changeDat = Interopt.doBackwardReconstruction(this.activeGameIndex.state, newGameIndex)
 
         const newGameStateObject = { ...this.gameStateObject.state }
 
         const entries = Object.entries(newGameStateObject)
 
-        const entry1 = entries.find(x => changeDat.toPartition === x[1])
+        const entry1 = entries.find(x => changeDat.toPartition === x[1].id)
         const entry2 = changeDat.samePartition
-            ? null
-            : entries.find(x => changeDat.fromPartition === x[1] && x[0] !== entry1[0])
+            ? entry1
+            : entries.find(x => changeDat.fromPartition === x[1].id && x[0] !== entry1[0])
 
-        const topId = {
-            topColorIndex: Number(entry1[0]),
-            height: changeDat.pieceTop.number
-        };
-        const bottomId = {
-            bottomColorIndex: (changeDat.samePartition
-                ? topId.topColorIndex
-                : Number(entry2[0])),
-            height: changeDat.pieceBottom.number
-        };
+        const topPartitionIndex = newGameStateObject[entry1[0]].partition.findIndex(x => x.number === changeDat.pieceTop.number)
+        newGameStateObject[entry1[0]].id = changeDat.toPartitionNew
+        newGameStateObject[entry1[0]].partition[topPartitionIndex] = {
+            number: changeDat.pieceBottom.number + changeDat.pieceTop.number,
+        }
 
-        newGameStateObject[entry1[0]] = changeDat.toPartitionNew
-        if (changeDat.twoChanges) newGameStateObject[entry2[0]] = changeDat.fromPartitionNew
-        else if (!changeDat.samePartition) {
-            delete newGameStateObject[entry2[0]]
+        const bottomPartitionIndex = newGameStateObject[entry2[0]].partition.findIndex(x => x.number === changeDat.pieceBottom.number)
+        // remove top onto bottom's position
+        newGameStateObject[entry1[0]].partition[topPartitionIndex].pos = newGameStateObject[entry2[0]].partition[bottomPartitionIndex].pos
+        newGameStateObject[entry2[0]].partition.splice(bottomPartitionIndex, 1)
+
+        if (changeDat.twoChanges) {
+            newGameStateObject[entry2[0]].id = changeDat.fromPartitionNew
+        } else if (!changeDat.samePartition) {
+            delete newGameStateObject[entry2[0]];
         }
 
         this.gameStateObject.trigger(newGameStateObject);
-        this.moveUpdate.trigger([
-            topId,
-            bottomId,
-            expandPartitons(newGameStateObject),
-        ]);
         this.setActiveGameIndex(newGameIndex);
         this.botsTurn.trigger(!this.botsTurn.state)
+    },
+    setRandomBoardPositions(slotCount) {
+        const piecePositions = [];
+        const ratio = 50 / 4;
+        for (let x = 3; x < ratio - 2; ++x) {
+            for (let y = 3; y < ratio - 2; ++y) {
+                if ((x + y) % 2 == 0) continue;
+                piecePositions.push({ x: (x - (ratio / 2)) * 4 - 1, y: (y - (ratio / 2)) * 4 - 1 });
+            }
+        }
+        piecePositions.sort(() => Math.random() - 0.5);
+        piecePositions.length = slotCount;
+        this.boardPositions.trigger(piecePositions)
+    },
+    setGameFromHistory(historyIndex) {
+        this.history.state[historyIndex]
     },
 };
 
