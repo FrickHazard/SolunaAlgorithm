@@ -8,8 +8,8 @@ const selectionSystem = {
         this.callbackMap = new Map();
         this.ignoreSet = new Set();
 
-        window.onclick = (ev) => {           
-            const objectId = this.gpuPicker.pick(ev.clientX / this.renderer.getPixelRatio(), ev.clientY / this.renderer.getPixelRatio(), (obj3d) => {        
+        window.onclick = (ev) => {
+            const objectId = this.gpuPicker.pick(ev.clientX / this.renderer.getPixelRatio(), ev.clientY / this.renderer.getPixelRatio(), (obj3d) => {
                 return !(this.ignoreSet.has(obj3d.id));
             });
             if (this.callbackMap.has(objectId)) {

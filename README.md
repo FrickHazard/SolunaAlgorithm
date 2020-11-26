@@ -1,5 +1,5 @@
 # SolunaAlgorithm
- 
+
 em++ main.cpp -s EXPORTED_FUNCTIONS='["_calculateAllGameStates", "_getGameState","_getInitialStates", "_getInitialStatesCount","_getGameState","_getGameStateCount", "_getBoardBranchResult", "_getBoardNextPossibleMoves","_getBoardNextPossibleMovesCount","_getPartition","_getPartitionCount","_getBoardNextPossibleMovesGameState","_getBoardNextPossibleMovesGameStateCount"]' -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' -O3 -s EXPORT_ES6=1 -s MODULARIZE=1 -s EXPORT_NAME="createModule" -s ENVIRONMENT="web"
 
 https://3dtextures.me/2020/06/11/fabric-nylon-weave-001/
@@ -68,6 +68,7 @@ Pieter ëSpineyí Verhoeven
 
 web: http://www.spiney.me/
 
-Please do not disclose my email without my permission, I don't like getting spam emails.
 
-Have fun :]
+magick convert Wood037_2K_Displacement.jpg Wood037_2K_Roughness.jpg -background black -set colorspace sRGB -channel RG -combine combined.jpg
+
+magick convert Metal_Mesh_003_ambientOcclusion.jpg Metal_Mesh_003_roughness.jpg Metal_Mesh_003_metallic.jpg -set colorspace sRGB -channel RGB -combine combined.jpg

@@ -157,7 +157,6 @@ const gameState = {
     },
     applyMove(nextGameIndex, newGameStateObject, moveLog) {
         this.gameStateObject.trigger(newGameStateObject);
-        this.selectedPieceData.trigger(undefined);
         this.setActiveGameIndex(nextGameIndex);
         this.history.trigger([...this.history.state, {
             gameIndex: nextGameIndex,
@@ -168,10 +167,18 @@ const gameState = {
             gameStateObject: JSON.parse(JSON.stringify(newGameStateObject)),
         }])
         if (this.activeGameBranchResult.state.leafCount === 0) {
+            // assumes bot never makes mistake
+            const mistakeTurnIndex = this.history.state.findIndex((item, i) =>
+                i !== this.history.state.length - 1
+                && item.branchResult.guaranteedWin
+                && this.history.state[i + 1].branchResult.guaranteedWin)
+
             this.gameOverResult.trigger({
+                mistakeTurnIndex,
                 botWon: this.botsTurn.state
             })
         }
+        this.selectedPieceData.trigger(undefined);
         this.botsTurn.trigger(!this.botsTurn.state)
     },
     setActiveGameIndex(gameIndex) {

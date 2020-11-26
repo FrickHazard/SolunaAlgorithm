@@ -6,7 +6,7 @@ import {
     ReplaceStencilOp,
     DoubleSide,
     NotEqualStencilFunc,
-    KeepStencilOp,
+    ZeroStencilOp,
     Uniform,
     Vector2,
 } from "three";
@@ -47,13 +47,13 @@ export class SelectionPiece extends Object3D {
             },
             side: BackSide,
             depthTest: false,
-            depthWrite: true,
+            depthWrite: false,
             stencilWrite: true,
 
             stencilFunc: NotEqualStencilFunc,
             stencilRef: 0x01,
-            stencilZPass: KeepStencilOp,
-            stencilFail: KeepStencilOp,
+            stencilZPass: ZeroStencilOp,
+            //stencilFail: ZeroStencilOp,
 
             vertexShader:
                 "uniform vec2 resolution;" +
@@ -85,7 +85,6 @@ export class SelectionPiece extends Object3D {
             writeStencil.scale.copy(piece.scale);
             writeStencil.quaternion.copy(piece.quaternion);
             writeStencil.position.copy(piece.position);
-            //  writeStencil.scale.multiplyScalar(0.0001)
             writeStencil.renderOrder = 1;
 
             const writeStencilLabel = new Mesh(piece.label.geometry, this.writeMat);

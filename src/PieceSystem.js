@@ -11,21 +11,20 @@ import {
 import { Piece } from './visuals/piece';
 import helevetikerFont from './assets/helvetiker_bold.typeface.json';
 
-import diffuse from "./assets/White_Marble_004_SD/White_Marble_004_COLOR.jpg";
-import displacment from "./assets/White_Marble_004_SD/White_Marble_004_DISP.png";
-import normal from "./assets/White_Marble_004_SD/White_Marble_004_NORM.jpg";
-import ambientOcclusion from "./assets/White_Marble_004_SD/White_Marble_004_OCC.jpg";
-import rough from "./assets/White_Marble_004_SD/White_Marble_004_ROUGH.jpg";
+import basecolor from './assets/Metal_Mesh_003_SD/Metal_Mesh_003_basecolor.jpg';
+import normal from './assets/Metal_Mesh_003_SD/Metal_Mesh_003_normal.jpg'
+import aoRoughnessMetal from "./assets/Metal_Mesh_003_SD/combined.jpg";
+
 import { SelectionPiece } from './visuals/selectionPiece';
 import GameState from './GameState';
 import SelectionSystem from './SelectionSystem';
 
+
 const textureLoader = new TextureLoader();
-const diffuseMap = textureLoader.load(diffuse);
-const bumpMap = textureLoader.load(ambientOcclusion);
+const basecolorMap = textureLoader.load(basecolor);
 const normalMap = textureLoader.load(normal);
-const roughnessMap = textureLoader.load(rough);
-const displacementMap = textureLoader.load(displacment);
+const aoRoughnessMetalMap = textureLoader.load(aoRoughnessMetal);
+
 
 const cylinderGeo = new CylinderGeometry(2, 2, 1, 32, 8);
 cylinderGeo.translate(0, 0.5, 0);
@@ -59,8 +58,7 @@ class PieceHighlightSubystem {
                 this.group.add(selectedPieceVisual);
                 this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[0]));
                 this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[1]));
-            }
-            else if (move) {
+            } else if (move) {
                 let color = 0x00ff00
                 if (GameState.getDisplayMistakes() && move.mistake) {
                     color = 0xffaa00
@@ -70,9 +68,20 @@ class PieceHighlightSubystem {
                 this.group.add(selectedPieceVisual);
                 this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[0]));
                 this.ignoreSubscriptions.push(SelectionSystem.subscribeToIgnore(selectedPieceVisual.children[1]));
+            } else {
+
             }
         }
     }
+}
+
+const getSubsForPieceVisual = (pieceVisual) => {
+    const result = []
+    result.push(SelectionSystem.subscribeToSelect(pieceVisual,
+        () => GameState.selectPiece({ ...pieceVisual.userData })))
+    pieceVisual.children.forEach(x => result.push(SelectionSystem.subscribeToSelect(x,
+        () => GameState.selectPiece({ ...pieceVisual.userData }))))
+    return result
 }
 
 export class PieceSystem {
@@ -103,8 +112,7 @@ export class PieceSystem {
 
         if (!selectionState) {
             for (const pieceVisual of this.pieceVisuals) {
-                this.subscriptions.push(SelectionSystem.subscribeToSelect(pieceVisual,
-                    () => GameState.selectPiece({ ...pieceVisual.userData })));
+                this.subscriptions = this.subscriptions.concat(getSubsForPieceVisual(pieceVisual))
             }
             return;
         }
@@ -117,8 +125,7 @@ export class PieceSystem {
                 || (pieceVisual.userData.colorIndex === selectionState.colorIndex
                     && pieceVisual.userData.partitionIndex === selectionState.partitionIndex)
             ) {
-                this.subscriptions.push(SelectionSystem.subscribeToSelect(pieceVisual,
-                    () => GameState.selectPiece({ ...pieceVisual.userData })));
+                this.subscriptions = this.subscriptions.concat(getSubsForPieceVisual(pieceVisual))
             }
         }
     }
@@ -129,23 +136,33 @@ export class PieceSystem {
         if (!gameStateObj) return
         this.group.add(this.highlightSystem.group);
 
-        this.labelMaterial = new MeshStandardMaterial({
-            color: 0xff5f00,
-            emissive: 0x111111
-        });
 
         this.labelGeometries = {};
+
+        const alpha = 0.63;
+        const beta = 0;
+        const gamma = 0.3;
+        const diffuseColor = new Color().setHSL(alpha, 0.5, gamma * 0.5 + 0.1);
         this.pieceMaterial = new MeshStandardMaterial({
-            // color: 0xffffff,
-            // emissive: 0x111111,
-            map: diffuseMap,
-            color: 0x333333,
-            //roughnessMap: roughnessMap
-            // bumpMap,
-            normalMap,
-            bumpMap
-            // roughnessMap,
+            color: 0xffffff,
+            roughness: 1,
+            metalness: 1,
+            map: basecolorMap,
+            aoMap: aoRoughnessMetalMap,
+            roughnessMap: aoRoughnessMetalMap,
+            metalnessMap: aoRoughnessMetalMap,
+            normalMap: normalMap,
+
         });
+        const gamma2 = 1;
+        const beta2 = 0;
+        const diffuseColor2 = new Color().setHSL(alpha, 0.5, gamma2 * 0.5 + 0.1);
+        this.labelMaterial = new MeshStandardMaterial({
+            color: diffuseColor2,
+            metalness: beta2,
+            roughness: 1.0 - alpha,
+        });
+
 
         for (const key of Object.keys(gameStateObj)) {
             this.labelGeometries[key] = new TextGeometry(key.toString(), {

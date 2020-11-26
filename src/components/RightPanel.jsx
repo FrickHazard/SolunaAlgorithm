@@ -13,6 +13,10 @@ export const RightPanel = ({ activeGameIndex, activeGameBranchResult, botsTurn, 
                     <div>
                         {gameOverResult.botWon ? <WhiteText>You Lose!☹️</WhiteText> : <WhiteText>You Win!🎉</WhiteText>}
                     </div>
+                    {gameOverResult.botWon && gameOverResult.mistakeTurnIndex !== -1
+                        ? <WhiteText>You Made a mistake on turn {gameOverResult.mistakeTurnIndex + 1}</WhiteText>
+                        : null
+                    }
                     <button onClick={() => GameState.restart()}>Reset Game</button>
                     <div style={{ backgroundColor: 'white', height: 1, marginBottom: 10, marginTop: 10 }} />
                 </>
@@ -20,15 +24,26 @@ export const RightPanel = ({ activeGameIndex, activeGameBranchResult, botsTurn, 
         }
         {
             GameState.getViewingHistoricMove()
-                ? <WhiteText>{history[historyIndex + 1].botsTurn ? 'Bots Move' : 'Your Move'}</WhiteText>
+                ? <>
+                    <WhiteText>{history[historyIndex + 1].botsTurn ? 'Bots Move' : 'Your Move'}</WhiteText>
+                    <div style={{ backgroundColor: 'white', height: 1, marginBottom: 10, marginTop: 10 }} />
+                </>
                 : botsTurn !== undefined
-                    ? <WhiteText>{botsTurn ? 'Bot\'s turn 🤖' : 'Your Turn'}</WhiteText>
+                    ? <>
+                        <WhiteText>{botsTurn ? 'Bot\'s turn 🤖' : 'Your Turn'}</WhiteText>
+                        <div style={{ backgroundColor: 'white', height: 1, marginBottom: 10, marginTop: 10 }} />
+                    </>
                     : null
         }
-        <div style={{ backgroundColor: 'white', height: 1, marginBottom: 10, marginTop: 10 }} />
-        <KeyValue label={'Board State Index: '} value={activeGameIndex.toString()} />
-        <KeyValue label={'Leaf Count: '} value={activeGameBranchResult.leafCount} />
-        <KeyValue label={'Leaf Victory:  '} value={activeGameBranchResult.leafVictory} />
-        <KeyValue label={'Player Can Force a Win: '} value={activeGameBranchResult.guaranteedWin.toString()} />
+        {
+            GameState.getDisplayMistakes()
+                ? <>
+                    <KeyValue label={'Board State Index: '} value={activeGameIndex.toString()} />
+                    <KeyValue label={'Leaf Count: '} value={activeGameBranchResult.leafCount} />
+                    <KeyValue label={'Leaf Victory:  '} value={activeGameBranchResult.leafVictory} />
+                    <KeyValue label={'Player Can Force a Win: '} value={activeGameBranchResult.guaranteedWin.toString()} />
+                </>
+                : null
+        }
     </div>
 }

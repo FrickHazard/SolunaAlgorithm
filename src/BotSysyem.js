@@ -26,7 +26,7 @@ const botSystem = {
                     }
                 }
                 GameState.makeSymmetricMove(highestBranchCountForOpponentToMakeMistake_i);
-            }, 1000)
+            }, 200)
         }
     },
     init() {
