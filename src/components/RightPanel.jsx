@@ -6,7 +6,7 @@ import { KeyValue } from './KeyValue.jsx'
 
 export const RightPanel = ({ activeGameIndex, activeGameBranchResult, botsTurn, history, historyIndex, gameOverResult }) => {
     if (!activeGameIndex) return null
-    return <div style={{ position: 'absolute', right: 0, bottom: 0, backgroundColor: panelColor, borderRadius: '2%', padding: '8px' }}>
+    return <div style={{ position: 'absolute', right: 0, bottom: 0, backgroundColor: panelColor, borderRadius: '2%', padding: '8px', pointerEvents: 'auto', }}>
         {
             gameOverResult
                 ? <>
