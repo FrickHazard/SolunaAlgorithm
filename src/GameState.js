@@ -33,18 +33,6 @@ class Sub {
     }
 }
 
-// const expandPartition = (partitionId) => {
-//     const expandedPartition = []
-//     const partition = Interopt.getPartition(partitionId);
-//     for (let i = 0; i < partition.length; ++i) {
-//         for (let j = 0; j < partition[i].count; ++j) {
-//             expandedPartition.push({ number: partition[i].number, pos: this.boardPositions.state[pieceIndex] });
-//             ++pieceIndex;
-//         }
-//     }
-//     return expandedPartition
-// }
-
 const getNextGameIndexFromMove = (gameStateObject, aciveGameIndex, top, bottom) => {
     return Interopt.doForwardReconstruction(aciveGameIndex, {
         pieceTop: {
@@ -84,44 +72,51 @@ const getMoves = ({ colorIndex, partitionIndex }, gameIndex, gameStateObject) =>
 }
 
 const gameState = {
-    menu: new Sub('initial-conditions'),
+    menu: new Sub('main-menu'),
     selectedPieceData: new Sub(),
     activeGameIndex: new Sub(),
-    // selector of active gameIndex
+    // tied to active gameIndex
     activeGameBranchResult: new Sub(),
     initialGamesIndices: new Sub(),
     gameStateObject: new Sub(),
     botsTurn: new Sub(),
     boardPositions: new Sub(),
     history: new Sub(),
+    historyIndex: new Sub(),
+    playMode: new Sub(),
+    gameOverResult: new Sub(),
     selectPiece({ colorIndex, partitionIndex }) {
         if (this.selectedPieceData.state !== undefined) {
             const { colorIndex: topColorIndex, partitionIndex: topPartitionIndex } = this.selectedPieceData.state;
             if (topColorIndex === colorIndex && partitionIndex === topPartitionIndex) {
                 this.selectedPieceData.trigger(undefined);
             } else {
-                const topPieceHeight = this.gameStateObject.state[topColorIndex].partition[topPartitionIndex].number
-                const bottomPieceHeight = this.gameStateObject.state[colorIndex].partition[partitionIndex].number
-                const bottomPos = this.gameStateObject.state[colorIndex].partition[partitionIndex].pos
+                const topPiece = this.gameStateObject.state[topColorIndex].partition[topPartitionIndex]
+                const bottomPiece = this.gameStateObject.state[colorIndex].partition[partitionIndex]
                 const nextGameIndex = getNextGameIndexFromMove(
                     this.gameStateObject.state,
                     this.activeGameIndex.state,
                     {
-                        number: topPieceHeight,
+                        number: topPiece.number,
                         colorIndex: topColorIndex
                     },
                     {
-                        number: bottomPieceHeight,
+                        number: bottomPiece.number,
                         colorIndex
                     })
+
+                const moveLog = {
+                    top: { ...topPiece },
+                    bottom: { ...bottomPiece },
+                }
 
                 const changeDat = Interopt.doBackwardReconstruction(this.activeGameIndex.state, nextGameIndex)
 
                 const newGameStateObject = { ...this.gameStateObject.state }
 
-                newGameStateObject[topColorIndex].partition[topPartitionIndex].number = topPieceHeight + bottomPieceHeight;
+                newGameStateObject[topColorIndex].partition[topPartitionIndex].number = topPiece.number + bottomPiece.number;
                 // remove top onto bottom's position
-                newGameStateObject[topColorIndex].partition[topPartitionIndex].pos = bottomPos
+                newGameStateObject[topColorIndex].partition[topPartitionIndex].pos = bottomPiece.pos
                 newGameStateObject[topColorIndex].id = changeDat.toPartitionNew
                 newGameStateObject[colorIndex].partition.splice(partitionIndex, 1)
                 if (changeDat.twoChanges) {
@@ -130,10 +125,7 @@ const gameState = {
                     delete newGameStateObject[colorIndex];
                 }
 
-                this.gameStateObject.trigger(newGameStateObject);
-                this.selectedPieceData.trigger(undefined);
-                this.setActiveGameIndex(nextGameIndex);
-                this.botsTurn.trigger(!this.botsTurn.state)
+                this.applyMove(nextGameIndex, newGameStateObject, moveLog)
             }
         } else {
             this.selectedPieceData.trigger({
@@ -163,29 +155,39 @@ const gameState = {
         this.gameStateObject.trigger(gameStateObject);
         this.selectedPieceData.trigger(undefined);
     },
+    applyMove(nextGameIndex, newGameStateObject, moveLog) {
+        this.gameStateObject.trigger(newGameStateObject);
+        this.selectedPieceData.trigger(undefined);
+        this.setActiveGameIndex(nextGameIndex);
+        this.history.trigger([...this.history.state, {
+            gameIndex: nextGameIndex,
+            branchResult: Interopt.getBranchResult(nextGameIndex),
+            moveLog,
+            botsTurn: this.botsTurn.state,
+            //TODO horrendous lazy deep clone
+            gameStateObject: JSON.parse(JSON.stringify(newGameStateObject)),
+        }])
+        if (this.activeGameBranchResult.state.leafCount === 0) {
+            this.gameOverResult.trigger({
+                botWon: this.botsTurn.state
+            })
+        }
+        this.botsTurn.trigger(!this.botsTurn.state)
+    },
     setActiveGameIndex(gameIndex) {
         this.activeGameIndex.trigger(gameIndex);
         if (gameIndex !== undefined) {
             const branchResult = Interopt.getBranchResult(gameIndex)
-            if (branchResult.leafCount === 0) {
-                this.menu.trigger('game-over')
-            }
             this.activeGameBranchResult.trigger(branchResult)
-            if (this.history.state) {
-                this.history.trigger([...this.history.state, {
-                    gameIndex,
-                    branchResult,
-                    //TODO horrendous lazy deep clone
-                    gameStateObject: JSON.parse(JSON.stringify(this.gameStateObject.state)),
-                }])
-            }
         }
     },
     restart() {
         this.setActiveGameIndex(undefined)
         this.gameStateObject.trigger(undefined);
+        this.historyIndex.trigger(undefined)
         this.history.trigger(undefined)
-        this.menu.trigger('initial-conditions');
+        this.gameOverResult.trigger(undefined)
+        this.menu.trigger('main-menu');
         this.botsTurn.trigger(undefined);
     },
     setInitialGameStateIndices() {
@@ -196,6 +198,7 @@ const gameState = {
         this.selectedPieceData.trigger(undefined);
         this.botsTurn.trigger(!playerGoesFirst)
         this.history.trigger([{
+            botsTurn: !playerGoesFirst,
             gameIndex: this.activeGameIndex.state,
             // horrendous lazy deep clone
             gameStateObject: JSON.parse(JSON.stringify(this.gameStateObject.state)),
@@ -204,6 +207,8 @@ const gameState = {
     },
     makeSymmetricMove(newGameIndex) {
         const changeDat = Interopt.doBackwardReconstruction(this.activeGameIndex.state, newGameIndex)
+
+        const moveLog = {}
 
         const newGameStateObject = { ...this.gameStateObject.state }
 
@@ -214,13 +219,24 @@ const gameState = {
             ? entry1
             : entries.find(x => changeDat.fromPartition === x[1].id && x[0] !== entry1[0])
 
+
         const topPartitionIndex = newGameStateObject[entry1[0]].partition.findIndex(x => x.number === changeDat.pieceTop.number)
+
+        moveLog.top = {
+            ...newGameStateObject[entry1[0]].partition[topPartitionIndex]
+        }
+
         newGameStateObject[entry1[0]].id = changeDat.toPartitionNew
         newGameStateObject[entry1[0]].partition[topPartitionIndex] = {
             number: changeDat.pieceBottom.number + changeDat.pieceTop.number,
         }
 
         const bottomPartitionIndex = newGameStateObject[entry2[0]].partition.findIndex(x => x.number === changeDat.pieceBottom.number)
+
+        moveLog.bottom = {
+            ...newGameStateObject[entry2[0]].partition[bottomPartitionIndex]
+        }
+
         // remove top onto bottom's position
         newGameStateObject[entry1[0]].partition[topPartitionIndex].pos = newGameStateObject[entry2[0]].partition[bottomPartitionIndex].pos
         newGameStateObject[entry2[0]].partition.splice(bottomPartitionIndex, 1)
@@ -231,9 +247,7 @@ const gameState = {
             delete newGameStateObject[entry2[0]];
         }
 
-        this.gameStateObject.trigger(newGameStateObject);
-        this.setActiveGameIndex(newGameIndex);
-        this.botsTurn.trigger(!this.botsTurn.state)
+        this.applyMove(newGameIndex, newGameStateObject, moveLog);
     },
     setRandomBoardPositions(slotCount) {
         const piecePositions = [];
@@ -249,8 +263,35 @@ const gameState = {
         this.boardPositions.trigger(piecePositions)
     },
     setGameFromHistory(historyIndex) {
-        this.history.state[historyIndex]
+        if (historyIndex === this.history.state.length - 1 && this.activeGameIndex.state === historyIndex) return
+        const { gameIndex, branchResult, gameStateObject } = this.history.state[historyIndex]
+        if (historyIndex === this.history.state.length - 1) {
+            this.historyIndex.trigger(undefined)
+        } else {
+            this.historyIndex.trigger(historyIndex)
+        }
+        this.activeGameIndex.trigger(gameIndex);
+        this.activeGameBranchResult.trigger(branchResult)
+        this.gameStateObject.trigger(gameStateObject)
+        this.selectedPieceData.trigger(undefined)
     },
+    play() {
+        const range = this.initialGamesIndices.state.length
+        const initialGameIndex = Math.floor(Math.random() * range)
+        this.setBoardFromInitialGameIndex(this.initialGamesIndices.state[initialGameIndex][0])
+        this.startGame({ playerGoesFirst: this.activeGameBranchResult.state.guaranteedWin })
+        this.playMode.trigger('play')
+    },
+    explore() {
+        this.menu.trigger('initial-conditions')
+        this.playMode.trigger('explore')
+    },
+    getViewingHistoricMove() {
+        return (this.historyIndex.state !== undefined)
+    },
+    getDisplayMistakes() {
+        return this.playMode.state === 'explore' || this.gameOverResult.state
+    }
 };
 
 export default gameState;

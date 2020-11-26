@@ -41,7 +41,7 @@ export class SelectionPiece extends Object3D {
             uniforms: {
                 color: new Uniform(color),
                 // this in pixels
-                outlineWidth: new Uniform(4),
+                outlineWidth: new Uniform(8),
                 // TODO on update
                 resolution: new Uniform(new Vector2(window.innerWidth, window.innerHeight))
             },

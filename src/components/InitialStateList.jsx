@@ -31,7 +31,7 @@ export const InitialGameState = ({ gameState }) => {
 
 export const InitialStateList = ({ initialGameStates, onSelect }) => <>
     <div>
-        <WhiteText style={{ margin: 0, fontSize: 20 }}>Select Initial Conditions</WhiteText>
+        <WhiteText style={{ margin: 0, fontSize: 20 }}>Choose Starting Board</WhiteText>
     </div>
     <ol style={{ overflow: 'scroll', padding: 0, margin: 0 }}>
         {initialGameStates.map(([gameIndex, gameState], listIndex) => (

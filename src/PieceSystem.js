@@ -7,7 +7,6 @@ import {
     Color,
     CylinderGeometry,
     TextGeometry,
-    Vector3,
 } from 'three';
 import { Piece } from './visuals/piece';
 import helevetikerFont from './assets/helvetiker_bold.typeface.json';
@@ -20,7 +19,6 @@ import rough from "./assets/White_Marble_004_SD/White_Marble_004_ROUGH.jpg";
 import { SelectionPiece } from './visuals/selectionPiece';
 import GameState from './GameState';
 import SelectionSystem from './SelectionSystem';
-import { CurveSystem } from './visuals/curves'
 
 const textureLoader = new TextureLoader();
 const diffuseMap = textureLoader.load(diffuse);
@@ -64,7 +62,7 @@ class PieceHighlightSubystem {
             }
             else if (move) {
                 let color = 0x00ff00
-                if (move.mistake) {
+                if (GameState.getDisplayMistakes() && move.mistake) {
                     color = 0xffaa00
                 }
                 const selectedPieceVisual = new SelectionPiece(new Color(color));
@@ -79,7 +77,6 @@ class PieceHighlightSubystem {
 
 export class PieceSystem {
     constructor() {
-        this.curveSystem = new CurveSystem();
         this.highlightSystem = new PieceHighlightSubystem();
         this.group = new Group();
         this.pieceVisuals = [];
@@ -102,7 +99,7 @@ export class PieceSystem {
         this.subscriptions.forEach(f => f());
         this.subscriptions = [];
 
-        if (GameState.menu.state !== 'none') return
+        if (GameState.menu.state !== 'none' || GameState.getViewingHistoricMove()) return
 
         if (!selectionState) {
             for (const pieceVisual of this.pieceVisuals) {
@@ -129,10 +126,8 @@ export class PieceSystem {
     setVisuals(gameStateObj) {
         this.subscriptions.forEach(f => f());
         this.group.children = [];
-        console.log(gameStateObj)
         if (!gameStateObj) return
         this.group.add(this.highlightSystem.group);
-        this.group.add(this.curveSystem);
 
         this.labelMaterial = new MeshStandardMaterial({
             color: 0xff5f00,

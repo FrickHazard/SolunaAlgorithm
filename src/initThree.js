@@ -7,13 +7,13 @@ import {
     PointLight,
     AmbientLight,
 } from 'three';
-// for gpu picker
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 import { Pillar } from './visuals/pillar';
 import { Skybox } from './visuals/skybox';
 import { PieceSystem } from './PieceSystem';
 import SelectionSystem from './SelectionSystem';
+import SplineMoveIndicatorSystem from './visuals/SplineMoveIndicatorSystem'
 
 export const initThree = (domElement) => {
     const scene = new Scene();
@@ -68,6 +68,8 @@ export const initThree = (domElement) => {
 
     const pieceSystem = new PieceSystem();
     scene.add(pieceSystem.group);
+    const splineIndicatorSystem = new SplineMoveIndicatorSystem();
+    scene.add(splineIndicatorSystem)
 
     // animate
     const animate = function () {

@@ -5,7 +5,7 @@ const botSystem = {
     onTurnChange(botsTurn) {
         if (botsTurn) {
             setTimeout(() => {
-                if (!GameState.botsTurn.state) return
+                if (!GameState.botsTurn.state || GameState.getViewingHistoricMove()) return
                 const gameStateIndex = GameState.activeGameIndex.state;
                 const nextPossibleGameStateIndices = Interopt.getNextPossibleGameStateIndices(gameStateIndex);
                 if (nextPossibleGameStateIndices.length === 0) {
