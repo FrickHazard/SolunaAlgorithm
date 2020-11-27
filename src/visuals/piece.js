@@ -2,7 +2,7 @@ import { Mesh, Vector3 } from 'three';
 
 export class Piece extends Mesh {
     constructor(options) {
-        super(options.pieceGeometry, options.pieceMaterial);
+        super(options.pieceGeometry, [options.pieceSideMaterial, options.pieceMaterial, options.pieceMaterial]);
 
         this.setLabel(options.labelGeometry, options.labelMaterial);
 

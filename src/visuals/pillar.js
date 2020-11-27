@@ -19,8 +19,7 @@ import pillarTopOpacity from '../assets/Fabric_Nylon_weave_001_SD/Fabric_Nylon_w
 
 import pillarSideDiffuse from '../assets/Tiles_034_SD/Tiles_034_basecolor.jpg';
 import pillarSideNormal from '../assets/Tiles_034_SD/Tiles_034_normal.jpg';
-import pillarSideRoughness from '../assets/Tiles_034_SD/Tiles_034_roughness.jpg';
-import pillarSideAmbientOcclusion from '../assets/Tiles_034_SD/Tiles_034_ambientOcclusion.jpg';
+import pillarSideAoRoughnessMetalness from '../assets/Tiles_034_SD/combined.jpg';
 
 const textureLoader = new TextureLoader();
 
@@ -57,7 +56,6 @@ export class Pillar extends Mesh {
         roughnessMap.wrapT = RepeatWrapping;
         roughnessMap.anisotropy = 8;
 
-
         const sideRepS = 16;
         const sideRepT = 160;
         const diffuseSide = textureLoader.load(pillarSideDiffuse);
@@ -70,36 +68,29 @@ export class Pillar extends Mesh {
         normalSide.wrapS = RepeatWrapping;
         normalSide.wrapT = RepeatWrapping;
         normalSide.anisotropy = 8;
-        const ambientOcclusionSide = textureLoader.load(pillarSideAmbientOcclusion);
-        ambientOcclusionSide.repeat.set(sideRepS, sideRepT);
-        ambientOcclusionSide.wrapS = RepeatWrapping;
-        ambientOcclusionSide.wrapT = RepeatWrapping;
-        ambientOcclusionSide.anisotropy = 8;
-        const roughnessMapSide = textureLoader.load(pillarSideRoughness);
-        roughnessMapSide.repeat.set(sideRepS, sideRepT);
-        roughnessMapSide.wrapS = RepeatWrapping;
-        roughnessMapSide.wrapT = RepeatWrapping;
-        roughnessMapSide.anisotropy = 8;
+        const pillarSideAoRoughnessMetalnessMap = textureLoader.load(pillarSideAoRoughnessMetalness);
+        pillarSideAoRoughnessMetalnessMap.repeat.set(sideRepS, sideRepT);
+        pillarSideAoRoughnessMetalnessMap.wrapS = RepeatWrapping;
+        pillarSideAoRoughnessMetalnessMap.wrapT = RepeatWrapping;
+        pillarSideAoRoughnessMetalnessMap.anisotropy = 8;
 
 
         const sideMaterial = new MeshStandardMaterial({
-            color: 0xddeedd,
+            emissive: 0x111111,
+            //color: 0xffffff,
             roughness: 1,
-            // metalness: 1,
+            metalness: 0,
             map: diffuseSide,
             normalMap: normalSide,
-            bumpMap: ambientOcclusionSide,
-            roughnessMap: roughnessMapSide,
-            normalScale: new Vector2(2, 2)
-            // color: 0x556655,
-            // emissive : 0x222233,
-            // emissive : 0x224433,
+            normalScale: new Vector2(2, 2),
+            aoMap: pillarSideAoRoughnessMetalnessMap,
+            roughnessMap: pillarSideAoRoughnessMetalnessMap,
+            metalnessMap: pillarSideAoRoughnessMetalnessMap,
         });
         const matArray = [
             sideMaterial,
             // top of cylinder
             new MeshStandardMaterial({
-                //emissive: 0x221133,
                 roughness: 1,
                 metalness: 0,
                 map: diffuse,
@@ -108,7 +99,7 @@ export class Pillar extends Mesh {
                 aoMap: pillarTopAoRoughnessMetalnessMap,
                 roughnessMap: pillarTopAoRoughnessMetalnessMap,
                 metalnessMap: pillarTopAoRoughnessMetalnessMap,
-                color: 0x888888
+                color: 0x7777ff
                 // displacementBias: 0.6
             }),
             new MeshBasicMaterial(),

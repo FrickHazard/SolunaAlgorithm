@@ -7,13 +7,14 @@ import {
     Color,
     CylinderGeometry,
     TextGeometry,
+    MirroredRepeatWrapping,
 } from 'three';
 import { Piece } from './visuals/piece';
 import helevetikerFont from './assets/helvetiker_bold.typeface.json';
 
-import basecolor from './assets/Metal_Mesh_003_SD/Metal_Mesh_003_basecolor.jpg';
-import normal from './assets/Metal_Mesh_003_SD/Metal_Mesh_003_normal.jpg'
-import aoRoughnessMetal from "./assets/Metal_Mesh_003_SD/combined.jpg";
+import basecolor from './assets/Wood037_2K-JPG/Wood037_2K_Color.jpg';
+import normal from './assets/Wood037_2K-JPG/Wood037_2K_Normal.jpg'
+import aoRoughnessMetal from "./assets/Wood037_2K-JPG/combined.jpg";
 
 import { SelectionPiece } from './visuals/selectionPiece';
 import GameState from './GameState';
@@ -25,6 +26,22 @@ const basecolorMap = textureLoader.load(basecolor);
 const normalMap = textureLoader.load(normal);
 const aoRoughnessMetalMap = textureLoader.load(aoRoughnessMetal);
 
+const rep = 0.333;
+const basecolorMapSide = textureLoader.load(basecolor);
+basecolorMapSide.wrapS = MirroredRepeatWrapping;
+basecolorMapSide.wrapT = MirroredRepeatWrapping;
+basecolorMapSide.anisotropy = 8
+basecolorMapSide.repeat.set(rep, rep);
+const normalMapSide = textureLoader.load(normal);
+normalMapSide.wrapS = MirroredRepeatWrapping;
+normalMapSide.wrapT = MirroredRepeatWrapping;
+normalMapSide.anisotropy = 8
+normalMapSide.repeat.set(rep, rep);
+const aoRoughnessMetalMapSide = textureLoader.load(aoRoughnessMetal);
+aoRoughnessMetalMapSide.wrapS = MirroredRepeatWrapping;
+aoRoughnessMetalMapSide.wrapT = MirroredRepeatWrapping;
+aoRoughnessMetalMapSide.anisotropy = 8
+aoRoughnessMetalMapSide.repeat.set(rep, rep);
 
 const cylinderGeo = new CylinderGeometry(2, 2, 1, 32, 8);
 cylinderGeo.translate(0, 0.5, 0);
@@ -139,12 +156,8 @@ export class PieceSystem {
 
         this.labelGeometries = {};
 
-        const alpha = 0.63;
-        const beta = 0;
-        const gamma = 0.3;
-        const diffuseColor = new Color().setHSL(alpha, 0.5, gamma * 0.5 + 0.1);
         this.pieceMaterial = new MeshStandardMaterial({
-            color: 0xffffff,
+            color: 0x5577FF,
             roughness: 1,
             metalness: 1,
             map: basecolorMap,
@@ -152,17 +165,20 @@ export class PieceSystem {
             roughnessMap: aoRoughnessMetalMap,
             metalnessMap: aoRoughnessMetalMap,
             normalMap: normalMap,
-
         });
-        const gamma2 = 1;
-        const beta2 = 0;
-        const diffuseColor2 = new Color().setHSL(alpha, 0.5, gamma2 * 0.5 + 0.1);
+        this.pieceSideMaterial = new MeshStandardMaterial({
+            color: 0x5577FF,
+            roughness: 1,
+            metalness: 1,
+            map: basecolorMapSide,
+            aoMap: aoRoughnessMetalMapSide,
+            roughnessMap: aoRoughnessMetalMapSide,
+            metalnessMap: aoRoughnessMetalMapSide,
+            normalMap: normalMapSide,
+        });
         this.labelMaterial = new MeshStandardMaterial({
-            color: diffuseColor2,
-            metalness: beta2,
-            roughness: 1.0 - alpha,
+            color: 0xffffff,
         });
-
 
         for (const key of Object.keys(gameStateObj)) {
             this.labelGeometries[key] = new TextGeometry(key.toString(), {
@@ -185,6 +201,7 @@ export class PieceSystem {
                 const piece = new Piece({
                     pieceGeometry: cylinderGeo,
                     pieceMaterial: this.pieceMaterial,
+                    pieceSideMaterial: this.pieceSideMaterial,
                     labelMaterial: this.labelMaterial,
                     labelGeometry: this.labelGeometries[colorIndex],
                     height: pieceData.number
