@@ -5,7 +5,7 @@ const path = require("path");
 module.exports = {
   entry: './src/App.jsx',
   target: 'web',
-  module: { 
+  module: {
     rules: [
       {
         test: /\.(js|jsx)$/,
@@ -13,11 +13,11 @@ module.exports = {
         use: {
           loader: "babel-loader"
         }
-      },    
+      },
       {
         test: /\.(js|jsx)$/,
         loader: require.resolve('@open-wc/webpack-import-meta-loader'),
-      }, 
+      },
       {
         test: /\.html$/,
         use: [
@@ -27,10 +27,10 @@ module.exports = {
         ]
       },
       {
-          test: /\.(png|jpg|gif)$/,
-          use: [
-            'file-loader',
-          ],
+        test: /\.(png|jpg|gif|svg)$/,
+        use: [
+          'file-loader',
+        ],
       },
       {
         test: /\.(json)$/,
@@ -48,7 +48,7 @@ module.exports = {
         options: {
           publicPath: "dist/",
           name: '[name].[ext]'
-        }  
+        }
       }
     ]
   },

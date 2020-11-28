@@ -1,6 +1,19 @@
 import React from 'react';
 import { WhiteText } from './WhiteText.jsx'
+import MoonSVG from '../assets/svgs/moon1.svg'
+import ShootingStarSVG from '../assets/svgs/shooting-star.svg'
+import SunSVG from '../assets/svgs/sun.svg'
+import StarSVG from '../assets/svgs/star.svg'
 
+
+const getSymbol = (index) => {
+    switch (index) {
+        case 0: return MoonSVG
+        case 1: return ShootingStarSVG
+        case 2: return SunSVG
+        case 3: return StarSVG
+    }
+}
 
 export const InitialGameState = ({ gameState }) => {
     return gameState.map((partitions, colorIndex) => (
@@ -14,14 +27,12 @@ export const InitialGameState = ({ gameState }) => {
                         height: '20px',
                         display: 'flex',
                         flexDirection: 'row',
-                        backgroundColor: '#666666',
+                        backgroundColor: '#0e008c',
                         borderRadius: '50%',
                         justifyContent: 'center',
                         alignItems: 'center'
                     }}>
-                        <p key={i} style={{ color: '#ffff00', display: 'inline' }}>
-                            {`${colorIndex}`}
-                        </p>
+                        <img src={getSymbol(colorIndex)} style={{ width: 14, height: 14 }} />
                     </div>)
                 }
                 return result;

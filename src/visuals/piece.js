@@ -1,10 +1,11 @@
 import { Mesh, Vector3 } from 'three';
+import { getSvgMesh } from './svg'
 
 export class Piece extends Mesh {
     constructor(options) {
         super(options.pieceGeometry, [options.pieceSideMaterial, options.pieceMaterial, options.pieceMaterial]);
 
-        this.setLabel(options.labelGeometry, options.labelMaterial);
+        this.setLabel(options.colorIndex);
 
         this.setHeight(options.height);
     }
@@ -20,16 +21,12 @@ export class Piece extends Mesh {
         this.translateY(height - 1);
     }
 
-    setLabel(labelGeometry, labelMaterial) {
+    setLabel(colorIndex) {
         if (this.label) this.remove(this.label);
-        this.label = new Mesh(
-            labelGeometry,
-            labelMaterial
-        );
+        this.label = getSvgMesh(colorIndex)
 
-        this.label.rotateX(-Math.PI / 2);
         this.attach(this.label);
-        this.label.position.set(0, 1.0, 0);
+        this.label.position.setY(1.01)
     }
 
     setPostition(vec2) {

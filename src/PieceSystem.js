@@ -1,16 +1,14 @@
 import {
+    Mesh,
     MeshStandardMaterial,
     Group,
-    Font,
     Vector2,
     TextureLoader,
     Color,
     CylinderGeometry,
-    TextGeometry,
     MirroredRepeatWrapping,
 } from 'three';
 import { Piece } from './visuals/piece';
-import helevetikerFont from './assets/helvetiker_bold.typeface.json';
 
 import basecolor from './assets/Wood037_2K-JPG/Wood037_2K_Color.jpg';
 import normal from './assets/Wood037_2K-JPG/Wood037_2K_Normal.jpg'
@@ -19,7 +17,6 @@ import aoRoughnessMetal from "./assets/Wood037_2K-JPG/combined.jpg";
 import { SelectionPiece } from './visuals/selectionPiece';
 import GameState from './GameState';
 import SelectionSystem from './SelectionSystem';
-
 
 const textureLoader = new TextureLoader();
 const basecolorMap = textureLoader.load(basecolor);
@@ -96,8 +93,13 @@ const getSubsForPieceVisual = (pieceVisual) => {
     const result = []
     result.push(SelectionSystem.subscribeToSelect(pieceVisual,
         () => GameState.selectPiece({ ...pieceVisual.userData })))
-    pieceVisual.children.forEach(x => result.push(SelectionSystem.subscribeToSelect(x,
+    pieceVisual.children.forEach(x => x !== pieceVisual.label && result.push(SelectionSystem.subscribeToSelect(x,
         () => GameState.selectPiece({ ...pieceVisual.userData }))))
+    pieceVisual.label.traverse((child) => {
+        if (child instanceof Mesh) {
+            result.push(SelectionSystem.subscribeToIgnore(child))
+        }
+    })
     return result
 }
 
@@ -153,12 +155,11 @@ export class PieceSystem {
         if (!gameStateObj) return
         this.group.add(this.highlightSystem.group);
 
-
         this.labelGeometries = {};
 
         this.pieceMaterial = new MeshStandardMaterial({
             color: 0x5577FF,
-            roughness: 1,
+            roughness: 0.6,
             metalness: 1,
             map: basecolorMap,
             aoMap: aoRoughnessMetalMap,
@@ -176,21 +177,7 @@ export class PieceSystem {
             metalnessMap: aoRoughnessMetalMapSide,
             normalMap: normalMapSide,
         });
-        this.labelMaterial = new MeshStandardMaterial({
-            color: 0xffffff,
-        });
 
-        for (const key of Object.keys(gameStateObj)) {
-            this.labelGeometries[key] = new TextGeometry(key.toString(), {
-                font: new Font(helevetikerFont),
-                size: 1.5,
-                height: 0.5,
-                curveSegments: 12,
-            });
-            this.labelGeometries[key].computeVertexNormals();
-            this.labelGeometries[key].computeBoundingBox();
-            this.labelGeometries[key].center();
-        }
         // divide ---
         this.pieceVisuals = [];
         for (const key of Object.keys(gameStateObj)) {
@@ -202,8 +189,7 @@ export class PieceSystem {
                     pieceGeometry: cylinderGeo,
                     pieceMaterial: this.pieceMaterial,
                     pieceSideMaterial: this.pieceSideMaterial,
-                    labelMaterial: this.labelMaterial,
-                    labelGeometry: this.labelGeometries[colorIndex],
+                    colorIndex,
                     height: pieceData.number
                 });
                 piece.userData = {
