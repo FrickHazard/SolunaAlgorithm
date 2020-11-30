@@ -1,1 +1,1 @@
-export const panelColor = '#666699';
+export const panelColor = '#545454';

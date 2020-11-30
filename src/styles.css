@@ -1,0 +1,18 @@
+:root {
+    --main-bg-color-highlight: #787878;
+    --main-bg-color: #484848;
+    --text-color: #ffffff;
+  }
+
+
+button {
+    border: 8px solid var(--main-bg-color-highlight);
+    border-radius: 4px;
+    background-color: var(--main-bg-color);
+    color: var(--text-color);
+    pointer-events: auto;
+}
+
+button:hover {
+    background-color: var(--main-bg-color-highlight);
+}

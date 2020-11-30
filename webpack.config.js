@@ -20,11 +20,7 @@ module.exports = {
       },
       {
         test: /\.html$/,
-        use: [
-          {
-            loader: "html-loader"
-          }
-        ]
+        use: ["html-loader"]
       },
       {
         test: /\.(png|jpg|gif|svg)$/,
@@ -40,6 +36,10 @@ module.exports = {
         include: [
           path.resolve(__dirname, 'assets'),
         ]
+      },
+      {
+        test: /\.css$/i,
+        use: ["style-loader", "css-loader"]
       },
       {
         test: /\.wasm$/,

@@ -106,8 +106,8 @@ const gameState = {
                     })
 
                 const moveLog = {
-                    top: { ...topPiece },
-                    bottom: { ...bottomPiece },
+                    top: { ...topPiece, colorIndex: topColorIndex },
+                    bottom: { ...bottomPiece, colorIndex: colorIndex },
                 }
 
                 const changeDat = Interopt.doBackwardReconstruction(this.activeGameIndex.state, nextGameIndex)
@@ -230,7 +230,8 @@ const gameState = {
         const topPartitionIndex = newGameStateObject[entry1[0]].partition.findIndex(x => x.number === changeDat.pieceTop.number)
 
         moveLog.top = {
-            ...newGameStateObject[entry1[0]].partition[topPartitionIndex]
+            ...newGameStateObject[entry1[0]].partition[topPartitionIndex],
+            colorIndex: Number(entry1[0])
         }
 
         newGameStateObject[entry1[0]].id = changeDat.toPartitionNew
@@ -241,7 +242,8 @@ const gameState = {
         const bottomPartitionIndex = newGameStateObject[entry2[0]].partition.findIndex(x => x.number === changeDat.pieceBottom.number)
 
         moveLog.bottom = {
-            ...newGameStateObject[entry2[0]].partition[bottomPartitionIndex]
+            ...newGameStateObject[entry2[0]].partition[bottomPartitionIndex],
+            colorIndex: Number(entry2[0])
         }
 
         // remove top onto bottom's position

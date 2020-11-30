@@ -2,10 +2,10 @@ import React from 'react';
 import { panelColor } from './panelColor'
 import { WhiteText } from './WhiteText.jsx'
 import GameState from '../GameState'
+import { PieceIcon } from './InitialStateList.jsx'
 
 export const HistoryPanel = ({ history, setGameFromHistory, playMode }) => {
     if (!history) return null
-
     return <div style={{
         position: 'absolute', left: 0, top: 0,
         backgroundColor: panelColor,
@@ -30,10 +30,17 @@ export const HistoryPanel = ({ history, setGameFromHistory, playMode }) => {
                     style={{ flexDirection: 'row', display: 'flex' }}
                     onClick={() => setGameFromHistory(i)}
                 >
-                    <div style={{ color: 'white' }}>
+                    <div style={{ color: 'white', flexDirection: 'row', display: 'flex', alignItems: 'center' }}>
                         {(history[i + 1].botsTurn) ? '🤖' : '😀'}
-                        {item.gameIndex}-{'>'}{history[i + 1].gameIndex}
-                        {GameState.getDisplayMistakes() && mistake ? '--Mistake' : null}
+                        {' Moved '}
+                        <PieceIcon
+                            styles={{ marginLeft: '4px', marginRight: '4px' }}
+                            colorIndex={history[i + 1].moveLog.top.colorIndex} />{`x${history[i + 1].moveLog.top.number}`}
+                        {' onto '}
+                        <PieceIcon
+                            styles={{ marginLeft: '4px', marginRight: '4px' }}
+                            colorIndex={history[i + 1].moveLog.bottom.colorIndex} />{`x${history[i + 1].moveLog.bottom.number}`}
+                        {GameState.getDisplayMistakes() && mistake ? '-M' : null}
                     </div>
 
                 </li>

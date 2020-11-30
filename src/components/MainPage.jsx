@@ -6,6 +6,7 @@ import { panelColor } from './panelColor'
 import { HistoryPanel } from './HistoryPanel.jsx'
 import { RightPanel } from './RightPanel.jsx';
 import { MainMenu } from './MainMenu.jsx'
+import { Button } from './Button.jsx'
 
 export const MainPage = (props) => {
     const [menuState, setMenuState] = useState(GameState.menu.state)
@@ -40,25 +41,25 @@ export const MainPage = (props) => {
             break;
         case 'first-or-last':
             centerPanel = (
-                <>
-                    <div>
-                        <WhiteText>Go First?</WhiteText>
-                    </div>
-                    <button onClick={() => {
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}>
+                    <Button onClick={() => {
                         GameState.startGame({ playerGoesFirst: true })
-                    }}>Yes</button>
-                    <button onClick={() => {
+                    }}>Go First</Button>
+                    <Button onClick={() => {
                         GameState.startGame({ playerGoesFirst: false })
-                    }}>No</button>
+                    }}>Go Second</Button>
                     <div>
-                        <WhiteText>
+                        <WhiteText style={{ fontSize: 20 }}>
                             {activeGameBranchResult.guaranteedWin
                                 ? 'Player 1 can Force a win.'
                                 : 'Player 2 can Force a win.'
                             }
                         </WhiteText>
                     </div>
-                </>
+                </div>
             )
             break;
     }

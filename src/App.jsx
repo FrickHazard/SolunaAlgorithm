@@ -5,6 +5,7 @@ import { MainPage } from './components/MainPage.jsx';
 import { initThree } from './initThree';
 import GameState from './GameState';
 import Bot from './BotSysyem';
+import './styles.css';
 
 initThree(document.body);
 
