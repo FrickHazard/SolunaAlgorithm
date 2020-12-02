@@ -840,14 +840,42 @@ uint32_t doForwardReconstruction
     return forward_reconstruction(gameIndex, dat);
 }
 
+uint32_t getPartitionId (PartitionNumber *partitionData, uint32_t size) {
+    std::vector<PartitionNumber> a = std::vector<PartitionNumber>(partitionData, partitionData + size);
+    return state.partitionToIdMap.at(a);
+}
+
 #ifdef __cplusplus
 }
 #endif
 
 int main() {
     calculateAllGameStates(4, 12);
+//    auto test22 = state.allGameStates[1002];
+////    ChangeDat test223 = {
+////        {1,1},
+////        {2,1},
+////
+////    }
+//    auto aaa = forward_reconstruction(1002, backward_reconstruction(1002, 1007));
+//    ChangeDat test = {
+//        {1,1},
+//        {1,1},
+//        3,
+//        5,
+//        false,
+//        0,
+//        0,
+//        false
+//    };
+    doForwardReconstruction(997, 1, 1, 1, 1, 3, 8, false);
     for (uint32_t i = 0; i < state.allGameStates.size(); ++i) {
         for (uint32_t j = 0; j < state.allMoves[i].size(); ++j) {
+            if (i == 1002 && state.allMoves[i][j] == 1007) {
+                auto test23 = state.allPartitions[5];
+                auto test22 = state.allGameStates[1007];
+                auto aaasdfasdf = 0;
+            }
             ChangeDat dat = backward_reconstruction(i, state.allMoves[i][j]);
             
             assert(doForwardReconstruction(i, dat.pieceTop.number, dat.pieceTop.count, dat.pieceBottom.number, dat.pieceBottom.count, dat.toPartition, dat.fromPartiton, dat.samePartition) == state.allMoves[i][j]);

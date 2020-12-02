@@ -110,18 +110,16 @@ const gameState = {
                     bottom: { ...bottomPiece, colorIndex: colorIndex },
                 }
 
-                const changeDat = Interopt.doBackwardReconstruction(this.activeGameIndex.state, nextGameIndex)
-
                 const newGameStateObject = { ...this.gameStateObject.state }
 
                 newGameStateObject[topColorIndex].partition[topPartitionIndex].number = topPiece.number + bottomPiece.number;
                 // remove top onto bottom's position
                 newGameStateObject[topColorIndex].partition[topPartitionIndex].pos = bottomPiece.pos
-                newGameStateObject[topColorIndex].id = changeDat.toPartitionNew
                 newGameStateObject[colorIndex].partition.splice(partitionIndex, 1)
-                if (changeDat.twoChanges) {
-                    newGameStateObject[colorIndex].id = changeDat.fromPartitionNew
-                } else if (!changeDat.samePartition) {
+                newGameStateObject[topColorIndex].id = Interopt.getPartitionId(newGameStateObject[topColorIndex].partition)
+                if (topColorIndex !== colorIndex && newGameStateObject[colorIndex].partition.length > 0) {
+                    newGameStateObject[colorIndex].id = Interopt.getPartitionId(newGameStateObject[colorIndex].partition)
+                } else if (topColorIndex !== colorIndex) {
                     delete newGameStateObject[colorIndex];
                 }
 
@@ -225,7 +223,6 @@ const gameState = {
         const entry2 = changeDat.samePartition
             ? entry1
             : entries.find(x => changeDat.fromPartition === x[1].id && x[0] !== entry1[0])
-
 
         const topPartitionIndex = newGameStateObject[entry1[0]].partition.findIndex(x => x.number === changeDat.pieceTop.number)
 

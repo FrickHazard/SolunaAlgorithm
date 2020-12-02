@@ -6,7 +6,6 @@
 
 
 button {
-    border: 8px solid var(--main-bg-color-highlight);
     border-radius: 4px;
     background-color: var(--main-bg-color);
     color: var(--text-color);

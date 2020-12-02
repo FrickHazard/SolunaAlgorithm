@@ -17,11 +17,29 @@ export default class SplineMoveIndicatorSystem extends Object3D {
         const moveLog = GameState.history.state[GameState.historyIndex.state + 1].moveLog
         const point1 = new Vector3(moveLog.top.pos.x, moveLog.top.number, moveLog.top.pos.y)
         const point2 = new Vector3(moveLog.bottom.pos.x, moveLog.bottom.number, moveLog.bottom.pos.y)
+        const midpoint1 = (new Vector3()).lerpVectors(point1, point2, 0.3333)
+        const midpoint2 = (new Vector3()).lerpVectors(point1, point2, 0.6666)
+        const dir = point2.clone().sub(point1).normalize()
+        const crossUp = dir.clone().cross(new Vector3(0, 1, 0))
+        const lineUp = crossUp.clone().cross(dir)
+
+        {
+            this.add(new ArrowHelper(
+                lineUp,
+                midpoint1,
+                3, 0xff00ff, 1, 1));
+            this.add(new ArrowHelper(
+                lineUp,
+                midpoint2,
+                3, 0xff00ff, 1, 1));
+        }
+
         const midpoint = (new Vector3()).lerpVectors(point1, point2, 0.5)
         const height = Math.max(point1.y, point2.y) + 10
         const curve = new CatmullRomCurve3([
             point1,
-            midpoint.setY(height),
+            midpoint1.add(lineUp.clone().multiplyScalar(3)),
+            midpoint2.add(lineUp.clone().multiplyScalar(3)),
             point2
         ])
         const tubeGeometry = new TubeBufferGeometry(curve, 30, 0.6, 10, false);

@@ -10,11 +10,10 @@ const getSymbol = (index) => {
     switch (index) {
         case 0: return MoonSVG
         case 1: return ShootingStarSVG
-        case 2: return SunSVG
-        case 3: return StarSVG
+        case 2: return StarSVG
+        case 3: return SunSVG
     }
 }
-
 
 export const PieceIcon = ({ colorIndex, styles }) => {
     return <div style={{

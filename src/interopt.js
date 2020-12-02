@@ -84,6 +84,35 @@ const interopt = {
         return result;
     },
 
+    getPartitionId(gameObjectPartition) {
+        const hashTable = gameObjectPartition.reduce((obj, partitionNumb) => {
+            if (obj[partitionNumb.number]) ++obj[partitionNumb.number];
+            else obj[partitionNumb.number] = 1;
+            return obj
+        }, {})
+
+
+        const sortedEntries = Object.entries(hashTable)
+        sortedEntries.sort(x => Number(x[0]))
+        const partition = sortedEntries.reduce((arr, entry) => {
+            arr.push(Number(entry[0]))
+            arr.push(entry[1])
+            return arr;
+        }, [])
+
+        const ptr = Module._malloc(partition.length * 4);
+        console.log(Module)
+        partition.forEach((part, i) => {
+            Module.setValue(ptr + (i * 4), part, 'i32')
+        })
+        //const partitionDataArray = new Uint32Array(partition)
+        // Module.HEAPU8.set(partitionDataArray, ptr);
+
+        const id = Module._getPartitionId(ptr, partition.length / 2);
+        Module._free(ptr);
+        return id;
+    },
+
     getPartition(partitionId) {
         const partitionPtr = Module._getPartition(partitionId);
         const partitionCount = Module._getPartitionCount(partitionId);
