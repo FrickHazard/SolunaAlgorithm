@@ -23,19 +23,19 @@ export default class SplineMoveIndicatorSystem extends Object3D {
         const crossUp = dir.clone().cross(new Vector3(0, 1, 0))
         const lineUp = crossUp.clone().cross(dir)
 
-        {
-            this.add(new ArrowHelper(
-                lineUp,
-                midpoint1,
-                3, 0xff00ff, 1, 1));
-            this.add(new ArrowHelper(
-                lineUp,
-                midpoint2,
-                3, 0xff00ff, 1, 1));
-        }
+        // {
+        //     this.add(new ArrowHelper(
+        //         lineUp,
+        //         midpoint1,
+        //         3, 0xff00ff, 1, 1));
+        //     this.add(new ArrowHelper(
+        //         lineUp,
+        //         midpoint2,
+        //         3, 0xff00ff, 1, 1));
+        // }
 
-        const midpoint = (new Vector3()).lerpVectors(point1, point2, 0.5)
-        const height = Math.max(point1.y, point2.y) + 10
+        //const midpoint = (new Vector3()).lerpVectors(point1, point2, 0.5)
+        // const height = Math.max(point1.y, point2.y) + 10
         const curve = new CatmullRomCurve3([
             point1,
             midpoint1.add(lineUp.clone().multiplyScalar(3)),
@@ -50,8 +50,8 @@ export default class SplineMoveIndicatorSystem extends Object3D {
         });
         const curveObject = new Mesh(tubeGeometry, material);
         this.add(new ArrowHelper(
-            point2.clone().sub(midpoint).normalize(),
-            point2.clone().add(midpoint.clone().sub(point2).normalize().multiplyScalar(3.5)),
+            point2.clone().sub(midpoint2).normalize(),
+            point2.clone().add(midpoint2.clone().sub(point2).normalize().multiplyScalar(3.5)),
             3, 0xff00ff, 1, 1));
         this.add(curveObject)
     }

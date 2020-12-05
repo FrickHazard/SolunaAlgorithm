@@ -72,6 +72,7 @@ const getMoves = ({ colorIndex, partitionIndex }, gameIndex, gameStateObject) =>
 }
 
 const gameState = {
+    showInstructions: new Sub(),
     menu: new Sub('main-menu'),
     selectedPieceData: new Sub(),
     activeGameIndex: new Sub(),

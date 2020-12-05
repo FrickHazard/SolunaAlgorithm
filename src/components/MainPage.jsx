@@ -7,9 +7,11 @@ import { HistoryPanel } from './HistoryPanel.jsx'
 import { RightPanel } from './RightPanel.jsx';
 import { MainMenu } from './MainMenu.jsx'
 import { Button } from './Button.jsx'
+import { DocumenationAndInstuctions } from './DocumentationAndInstuctions.jsx'
 
 export const MainPage = (props) => {
     const [menuState, setMenuState] = useState(GameState.menu.state)
+    const [showInstructions, setShowInstructions] = useState(GameState.showInstructions.state)
     const [initialGameStates, setInitialGameStates] = useState([]);
     const [activeGameIndex, setActiveGameIndex] = useState(GameState.activeGameIndex.state);
     const [activeGameBranchResult, setActiveGameBranchResult] = useState(GameState.activeGameBranchResult.state);
@@ -28,6 +30,7 @@ export const MainPage = (props) => {
     useStateEffect(GameState.historyIndex.subscribe(setHistoryIndex));
     useStateEffect(GameState.playMode.subscribe(setPlayMode));
     useStateEffect(GameState.gameOverResult.subscribe(setGameOverResult));
+    useStateEffect(GameState.showInstructions.subscribe(setShowInstructions));
 
     let centerPanel = null
     switch (menuState) {
@@ -64,7 +67,10 @@ export const MainPage = (props) => {
             break;
     }
 
-    if (menuState === 'main-menu') return <MainMenu />
+    if (menuState === 'main-menu') return <>
+        <DocumenationAndInstuctions showInstructions={showInstructions} setShowInstuctions={x => GameState.showInstructions.trigger(x)} />
+        <MainMenu />
+    </>
 
     return <div style={{
         width: '100%',
@@ -108,6 +114,7 @@ export const MainPage = (props) => {
             history={history}
             setGameFromHistory={(historyIndex) => GameState.setGameFromHistory(historyIndex)}
             playMode={playMode}
+            historyIndex={historyIndex}
         />
     </div>
 };

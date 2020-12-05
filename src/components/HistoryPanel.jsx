@@ -4,7 +4,7 @@ import { WhiteText } from './WhiteText.jsx'
 import GameState from '../GameState'
 import { PieceIcon } from './InitialStateList.jsx'
 
-export const HistoryPanel = ({ history, setGameFromHistory, playMode }) => {
+export const HistoryPanel = ({ history, setGameFromHistory, historyIndex }) => {
     if (!history) return null
     return <div style={{
         position: 'absolute', left: 0, top: 0,
@@ -17,10 +17,10 @@ export const HistoryPanel = ({ history, setGameFromHistory, playMode }) => {
         borderTopLeftRadius: 0,
         padding: '20px 20px'
     }}>
-        <div>
+        <div style={{ paddingLeft: 10 }}>
             <WhiteText style={{ margin: 0, fontSize: 20 }}>Move History</WhiteText>
         </div>
-        <ul style={{ overflow: 'scroll', padding: 0, margin: 0 }}>
+        <div style={{ overflow: 'scroll', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', justifyContent: 'stretch' }}>
             {history.map((item, i) => {
                 if (i === history.length - 1) return null
                 const mistake = item.branchResult.guaranteedWin
@@ -30,7 +30,7 @@ export const HistoryPanel = ({ history, setGameFromHistory, playMode }) => {
                     style={{ flexDirection: 'row', display: 'flex' }}
                     onClick={() => setGameFromHistory(i)}
                 >
-                    <div style={{ color: 'white', flexDirection: 'row', display: 'flex', alignItems: 'center' }}>
+                    <div className={(historyIndex === i) ? 'outline-selected' : 'outline'}>
                         {(history[i + 1].botsTurn) ? '🤖' : '😀'}
                         {' Moved '}
                         <PieceIcon
@@ -40,7 +40,7 @@ export const HistoryPanel = ({ history, setGameFromHistory, playMode }) => {
                         <PieceIcon
                             styles={{ marginLeft: '4px', marginRight: '4px' }}
                             colorIndex={history[i + 1].moveLog.bottom.colorIndex} />{`x${history[i + 1].moveLog.bottom.number}`}
-                        {GameState.getDisplayMistakes() && mistake ? '-M' : null}
+                        {GameState.getDisplayMistakes() && mistake ? <div style={{ color: 'red', marginLeft: '4px', marginRight: '4px' }}>X</div> : null}
                     </div>
 
                 </li>
@@ -49,10 +49,10 @@ export const HistoryPanel = ({ history, setGameFromHistory, playMode }) => {
                 style={{ flexDirection: 'row', display: 'flex' }}
                 onClick={() => setGameFromHistory(history.length - 1)}
             >
-                <div style={{ color: 'white' }}>
-                    {'Current'}
+                <div className={historyIndex === undefined ? 'outline-selected' : 'outline'}>
+                    {'Current Game Board'}
                 </div>
             </li>
-        </ul>
+        </div>
     </div>
 }

@@ -4,6 +4,42 @@
     --text-color: #ffffff;
   }
 
+hr {
+    color:#ffffff;
+}
+
+  h1 {
+    font-family: Arial;
+    color:#ffffff;
+  }
+
+  h2 {
+    font-family: Arial;
+    color:#ffffff;
+  }
+
+  h3 {
+    font-family: Arial;
+    color:#ffffff;
+  }
+
+p {
+    font-family: Arial;
+    font-size: 20px;
+    color:#ffffff;
+ }
+
+ div {
+    font-family: Arial;
+    font-size: 20px;
+    color:#ffffff;
+ }
+
+li {
+    font-family: Arial;
+    font-size: 20px;
+    color:#ffffff;
+ }
 
 button {
     border-radius: 4px;
@@ -14,4 +50,43 @@ button {
 
 button:hover {
     background-color: var(--main-bg-color-highlight);
+}
+
+
+.outline {
+  margin-bottom: 4px;
+  flex: 1;
+  padding-left: 2px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-left-color:transparent;
+  border-left-width: 8px;
+  border-right-width: 0px;
+  border-top-width: 0px;
+  border-bottom-width: 0px;
+  border-style: solid;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.outline:hover {
+  border-left-width: 8px;
+  border-left-color: #ffffff;
+}
+
+.outline-selected {
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  padding-left: 2px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: rgba(0, 128, 0, 0.3);
+  border-left-color:green;
+  border-left-width: 8px;
+  border-right-width: 0px;
+  border-top-width: 0px;
+  border-bottom-width: 0px;
+  border-style: solid;
 }

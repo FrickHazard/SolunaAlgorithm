@@ -29,6 +29,12 @@ module.exports = {
         ],
       },
       {
+        test: /\.(md)$/,
+        use: [
+          'raw-loader',
+        ],
+      },
+      {
         test: /\.(json)$/,
         use: [
           'file-loader',

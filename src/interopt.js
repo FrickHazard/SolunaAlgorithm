@@ -101,7 +101,6 @@ const interopt = {
         }, [])
 
         const ptr = Module._malloc(partition.length * 4);
-        console.log(Module)
         partition.forEach((part, i) => {
             Module.setValue(ptr + (i * 4), part, 'i32')
         })

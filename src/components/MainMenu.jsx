@@ -16,6 +16,6 @@ export const MainMenu = ({ }) => {
         <div style={{ fontSize: 40, color: 'white', textAlign: 'center', fontWeight: 'bold' }} >Soluna Solved</div>
         <Button onClick={() => GameState.play()}>Play</Button>
         <Button onClick={() => GameState.explore()}>Explore</Button>
-        <Button>Rules and Description</Button>
+        <Button onClick={() => GameState.showInstructions.trigger(true)}>Rules and Description</Button>
     </div>
 }
