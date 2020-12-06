@@ -12,6 +12,8 @@ export const useStateEffect = (...unsubscribeCallbacks) => {
     }, [])
 };
 
+export const deepCopy = (x) => JSON.parse(JSON.stringify(x))
+
 class Sub {
     constructor(initialState) {
         this.set = new Set();
@@ -111,7 +113,7 @@ const gameState = {
                     bottom: { ...bottomPiece, colorIndex: colorIndex },
                 }
 
-                const newGameStateObject = { ...this.gameStateObject.state }
+                const newGameStateObject = deepCopy(this.gameStateObject.state)
 
                 newGameStateObject[topColorIndex].partition[topPartitionIndex].number = topPiece.number + bottomPiece.number;
                 // remove top onto bottom's position
@@ -163,7 +165,7 @@ const gameState = {
             moveLog,
             botsTurn: this.botsTurn.state,
             //TODO horrendous lazy deep clone
-            gameStateObject: JSON.parse(JSON.stringify(newGameStateObject)),
+            gameStateObject: deepCopy(newGameStateObject),
         }])
         if (this.activeGameBranchResult.state.leafCount === 0) {
             // assumes bot never makes mistake
@@ -216,7 +218,7 @@ const gameState = {
 
         const moveLog = {}
 
-        const newGameStateObject = { ...this.gameStateObject.state }
+        const newGameStateObject = deepCopy(this.gameStateObject.state);
 
         const entries = Object.entries(newGameStateObject)
 

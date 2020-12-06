@@ -32,6 +32,8 @@ For any Game Board $G$ there is one and only one $I$, such that $V(I)$ contains 
 
 All End Game Boards $E$ can be represenetd as a *partition with distinct parts*, where every piece is colored differently.
 
+**Lemma 4** For any Game Board $G$ from base $I$ the winner is equal $(|I| - |G|) \equiv \mod 2$, where $0$ is player $2$ wins.
+
 
 
 We prove two types of move graph isomorphisms
