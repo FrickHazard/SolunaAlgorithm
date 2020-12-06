@@ -24,7 +24,14 @@
 
 **Lemma 2**
 
-For any Game Board $G$ there is one and only one $I$, such that $V(I)$ contains $G$ as a node.
+$\forall \ G, \ G \in V(I) \implies |I| = \sum_{S\in G}H(S)$
+
+Consider then
+
+
+**Lemma 3**
+
+
 
 **Proof**
 

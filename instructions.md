@@ -26,7 +26,7 @@ In play mode you are pitted against a perfect robot.  If you play *perfectly* yo
 
 ### Explore
 
-In explore mode you may choose a starting board and see what moves are mistake.  This is useful for honing your strategy against the bot.  See if you can use this mode to help you develop a winning strategy.
+In explore mode you may choose a starting board and see what moves are mistakes.  This is useful for honing your strategy against the bot.  See if you can use this mode to help you develop a winning strategy.
 
 ------
 
