@@ -55,6 +55,8 @@ button:hover {
 
 .outline {
   margin-bottom: 4px;
+  justify-content: center;
+  align-items: center;
   flex: 1;
   padding-left: 2px;
   display: flex;
@@ -75,6 +77,7 @@ button:hover {
 }
 
 .outline-selected {
+  margin-bottom: 4px;
   justify-content: center;
   align-items: center;
   flex: 1;
